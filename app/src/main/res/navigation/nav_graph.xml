@@ -1,0 +1,137 @@
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/welcomeFragment">
+
+    <!-- Fragmento de Bienvenida -->
+    <fragment
+        android:id="@+id/welcomeFragment"
+        android:name="com.example.seguimientopeliculas.ui.WelcomeFragment"
+        android:label="fragment_welcome"
+        tools:layout="@layout/fragment_welcome">
+        <action
+            android:id="@+id/action_welcomeFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_welcomeFragment_to_showMoviesFragment"
+            app:destination="@id/showMoviesFragment" />
+    </fragment>
+
+    <!-- Fragmento de Inicio de Sesión -->
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.seguimientopeliculas.login.LoginFragment"
+        android:label="Inicio de Sesión"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_loginFragment_to_showMoviesFragment"
+            app:destination="@id/showMoviesFragment" />
+        <action
+            android:id="@+id/action_loginFragment_to_registerFormFragment"
+            app:destination="@id/registerFormFragment" />
+    </fragment>
+
+    <!-- Fragmento de Registro -->
+    <fragment
+        android:id="@+id/registerFormFragment"
+        android:name="com.example.seguimientopeliculas.ui.RegisterFormFragment"
+        android:label="Registro de Usuario"
+        tools:layout="@layout/fragment_register_form">
+        <action
+            android:id="@+id/action_registerFormFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+    </fragment>
+
+    <!-- Fragmento para Mostrar Películas -->
+    <fragment
+        android:id="@+id/showMoviesFragment"
+        android:name="com.example.seguimientopeliculas.ui.ShowMoviesFragment"
+        android:label="Mostrar Películas"
+        tools:layout="@layout/fragment_show_movies">
+        <action
+            android:id="@+id/action_showMoviesFragment_to_movieListFragment"
+            app:destination="@id/movieListFragment" />
+        <action
+            android:id="@+id/action_showMoviesFragment_to_addMoviesFragment"
+            app:destination="@id/addMoviesFragment" />
+    </fragment>
+
+    <!-- Fragmento para Listar Películas -->
+    <fragment
+        android:id="@+id/movieListFragment"
+        android:name="com.example.seguimientopeliculas.ui.MovieListFragment"
+        android:label="Lista de Películas"
+        tools:layout="@layout/fragment_movie_list">
+        <argument
+            android:name="isEditable"
+            app:argType="boolean"
+            android:defaultValue="false" />
+        <action
+            android:id="@+id/action_movieListFragment_to_addMoviesFragment"
+            app:destination="@id/addMoviesFragment" />
+        <action
+            android:id="@+id/action_movieListFragment_to_editMovieFragment"
+            app:destination="@id/editMovieFragment" />
+    </fragment>
+
+    <!-- Fragmento para Añadir Película -->
+    <fragment
+        android:id="@+id/addMoviesFragment"
+        android:name="com.example.seguimientopeliculas.ui.AddMovieFragment"
+        android:label="Añadir Película"
+        tools:layout="@layout/fragment_add_movies">
+        <action
+            android:id="@+id/action_addMoviesFragment_to_showMoviesFragment"
+            app:destination="@id/showMoviesFragment" />
+        <action
+            android:id="@+id/action_addMoviesFragment_to_movieListFragment"
+            app:destination="@id/movieListFragment" />
+    </fragment>
+
+    <!-- Fragmento para Editar Película -->
+    <fragment
+        android:id="@+id/editMovieFragment"
+        android:name="com.example.seguimientopeliculas.ui.EditMovieFragment"
+        android:label="Editar Película"
+        tools:layout="@layout/fragment_edit_movie">
+        <argument
+            android:name="movieId"
+            app:argType="integer" />
+        <argument
+            android:name="movieTitle"
+            app:argType="string" />
+        <argument
+            android:name="movieGenre"
+            app:argType="string" />
+        <argument
+            android:name="movieRating"
+            app:argType="integer" />
+        <argument
+            android:name="moviePremiere"
+            app:argType="boolean" />
+        <argument
+            android:name="movieStatus"
+            app:argType="string" />
+        <argument
+            android:name="movieComments"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/movieListEditFragment"
+        android:name="com.example.seguimientopeliculas.ui.MovieListEditFragment"
+        android:label="Editar Lista de Películas"
+        tools:layout="@layout/fragment_movie_list">
+        <action
+            android:id="@+id/action_movieListEditFragment_to_editMovieFragment"
+            app:destination="@id/editMovieFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.seguimientopeliculas.ui.ProfileFragment"
+        android:label="Perfil"
+        tools:layout="@layout/fragment_profile"/>
+        <action
+            android:id="@+id/action_profileFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+</navigation>
