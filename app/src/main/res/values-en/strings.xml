@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TrackingMovies</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title">Title: %1$s</string>
+    <string name="genre">Genre: %1$s</string>
+    <string name="rating">Rating: %1$s</string>
+    <string name="premiere">Premiere: %1$s</string>
+    <string name="status">Status: %1$s</string>
+    <string name="comments">Comments: %1$s</string>
+    <string name="title_register">ADD USER</string>
+    <string name="add_film">ADD FILM</string>
+    <string name="username">Username</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="welcome">Welcome\nMovie Tracking App</string>
+    <string name="register">Register</string>
+    <string name="error_message">Error message</string>
+    <string name="profile">USER PROFILE</string>
+    <string name="name">Username</string>
+    <string name="email_profile">Email</string>
+    <string name="newPassword">New Password</string>
+    <string name="confirm_newPassword">Confirm Password</string>
+    <string name="update">Update</string>
+    <string name="delete_account">Delete Account</string>
+    <string name="logout">Logout</string>
+    <string name="my_movies">MY MOVIES</string>
+    <string name="username_login">Username</string>
+    <string name="password_login">Password</string>
+    <string name="error_message_login">incorrect username or password</string>
+    <string name="login">Login</string>
+    <string name="register_login">Register</string>
+    <string name="edit_movie">EDIT MOVIE</string>
+    <string name="edit_title">Title</string>
+    <string name="edit_genre">Genre</string>
+    <string name="edit_rating">Rating</string>
+    <string name="edit_premiere">Premiere</string>
+    <string name="edit_status">Status</string>
+    <string name="edit_comments">Comments</string>
+    <string name="movie_update">Update</string>
+    <string name="movie_delete">Delete</string>
+    <string name="nav_profile">Profile</string>
+    <string name="nav_edit">Edit</string>
+    <string name="nav_show_movies">Movies</string>
+</resources>

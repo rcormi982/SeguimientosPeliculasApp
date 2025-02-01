@@ -23,7 +23,7 @@
             android:id="@+id/username"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Usuario"
+            android:hint="@string/username_login"
             android:inputType="text" />
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -44,7 +44,7 @@
             android:id="@+id/password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Contraseña"
+            android:hint="@string/password_login"
             android:inputType="textPassword" />
     </com.google.android.material.textfield.TextInputLayout>
     <TextView
@@ -53,7 +53,7 @@
         android:layout_height="wrap_content"
         android:textColor="@android:color/holo_red_light"
         android:visibility="gone"
-        android:text="Usuario o contraseña incorrectos"
+        android:text="@string/error_message_login"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="4dp"
@@ -68,7 +68,7 @@
         android:layout_marginStart="64dp"
         android:layout_marginTop="24dp"
         android:layout_marginEnd="64dp"
-        android:text="Login"
+        android:text="@string/login"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/passwordLabel" />
@@ -79,7 +79,7 @@
         android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="30dp"
-        android:text="Registro"
+        android:text="@string/register_login"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/loginButton"/>

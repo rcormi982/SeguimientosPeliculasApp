@@ -44,6 +44,10 @@ android {
 }
 
 dependencies {
+    implementation ("androidx.camera:camera-camera2:1.5.0-alpha05")
+    implementation ("androidx.camera:camera-lifecycle:1.5.0-alpha05")
+    implementation ("androidx.camera:camera-view:1.5.0-alpha05")
+    implementation ("androidx.camera:camera-core:1.5.0-alpha05")
     implementation ("androidx.datastore:datastore-preferences:1.1.1")
     implementation ("androidx.datastore:datastore-preferences-rxjava2:1.1.1")
     implementation ("androidx.datastore:datastore-preferences-rxjava3:1.1.1")

@@ -41,7 +41,7 @@ class MovieListFragment : Fragment() {
         }
 
         // Inicializar el adaptador
-        movieListAdapter = MovieListAdapter()
+        movieListAdapter = MovieListAdapter(requireContext())
 
         // Configuramos el RecyclerView
         setupRecyclerView()

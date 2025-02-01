@@ -3,13 +3,13 @@
     <item
         android:id="@+id/nav_show_movies"
         android:icon="@drawable/ic_movie"
-        android:title="Películas" />
+        android:title="@string/nav_show_movies" />
     <item
         android:id="@+id/nav_edit"
         android:icon="@drawable/ic_edit"
-        android:title="Editar" />
+        android:title="@string/nav_edit" />
     <item
         android:id="@+id/nav_profile"
         android:icon="@drawable/ic_profile"
-        android:title="Perfil" />
+        android:title="@string/nav_profile" />
 </menu>

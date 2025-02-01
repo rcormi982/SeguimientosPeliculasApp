@@ -11,7 +11,7 @@
         android:id="@+id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="MIS PELÍCULAS"
+        android:text="@string/my_movies"
         android:textSize="20sp"
         android:textStyle="bold"
         android:gravity="center"

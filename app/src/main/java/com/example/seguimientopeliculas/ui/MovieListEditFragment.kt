@@ -41,7 +41,7 @@ class MovieListEditFragment : Fragment() {
         binding.shareFab.visibility = View.GONE
 
         // Inicializar el adaptador con clics habilitados para editar
-        movieListAdapter = MovieListAdapter { movie ->
+        movieListAdapter = MovieListAdapter(requireContext()) { movie ->
             navigateToEditMovie(movie)
         }
 

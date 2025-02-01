@@ -23,7 +23,7 @@
         android:gravity="center"
         android:padding="16dp"
         android:layout_marginTop="120dp"
-        android:text="Bienvenido\nMovie Tracking App"
+        android:text="@string/welcome"
         android:textAlignment="center"
         android:textColor="@android:color/holo_blue_dark"
         android:textSize="24sp"
