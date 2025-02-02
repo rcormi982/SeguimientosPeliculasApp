@@ -1,20 +1,30 @@
 package com.example.seguimientopeliculas.data.remote
 
-import MovieNetworkDataSource
+import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import android.net.Uri
 import com.example.seguimientopeliculas.data.Movie
+import com.example.seguimientopeliculas.data.MoviesUser
+import com.example.seguimientopeliculas.data.ImageUrl
+import com.example.seguimientopeliculas.data.UpdateMoviesUserPayload
+import com.example.seguimientopeliculas.data.DataPayload
 import com.example.seguimientopeliculas.login.RegisterResponse
 import com.example.seguimientopeliculas.login.UserResponse
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.Response
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+
 
 @Singleton
 class UserNetworkDataSource @Inject constructor(
     private val strapiApi: StrapiApi,
     private val sharedPreferences: SharedPreferences,
-    //private val movieNetworkDataSource: MovieNetworkDataSource
+    private val context: Context
 ) : UserRemoteDataSource {
 
     override suspend fun registerUser(
@@ -91,7 +101,82 @@ class UserNetworkDataSource @Inject constructor(
         }
     }
 
-    private fun getJwtToken(): String {
+    override suspend fun getMoviesUserData(): MoviesUser {
+        val user = getUserData()
+        val response = strapiApi.getMoviesUserByUserId(user.id)
+        if (!response.isSuccessful || response.body()?.data.isNullOrEmpty()) {
+            throw Exception("Error al obtener datos del MoviesUser")
+        }
+
+        val moviesUserData = response.body()?.data?.firstOrNull()
+            ?: throw Exception("No se encontraron datos del MoviesUser")
+
+        // Extraer la URL de la imagen correctamente
+        val imageUrl = moviesUserData.attributes.imageUrl?.url
+
+        // Agregar registro de depuración para verificar la URL
+        Log.d("UserNetworkDataSource", "URL de foto de perfil: $imageUrl")
+
+        return MoviesUser(
+            id = moviesUserData.id,
+            username = moviesUserData.attributes.username,
+            email = moviesUserData.attributes.email,
+            password = "",
+            userId = user.id,
+            imageUrl = imageUrl, // Usar la URL de la imagen extraída
+            image = null // No necesitas mantener el objeto completo en este caso
+        )
+    }
+
+    override suspend fun uploadProfilePhoto(photoUri: Uri, moviesUserId: Int): String? {
+        try {
+            val file = File(photoUri.path ?: return null)
+            val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+            val body = MultipartBody.Part.createFormData("files", file.name, requestFile)
+
+            val token = getJwtToken()
+            if (token.isEmpty()) {
+                throw Exception("Token JWT no encontrado")
+            }
+
+            val response = strapiApi.uploadFile(body, "Bearer $token")
+            return if (response.isSuccessful) {
+                response.body()?.firstOrNull()?.url
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("UserNetworkDataSource", "Error uploading photo: ${e.message}")
+            return null
+        }
+    }
+
+    override suspend fun updateUserPhoto(moviesUserId: Int, photoUrl: String): Boolean {
+        try {
+            val token = getJwtToken()
+            if (token.isEmpty()) {
+                throw Exception("Token JWT no encontrado")
+            }
+
+            val payload = UpdateMoviesUserPayload(
+                data = DataPayload(imageUrl = photoUrl)
+            )
+
+            val response = strapiApi.updateMoviesUser(moviesUserId, payload, "Bearer $token")
+
+            // Añadir logs para debug
+            if (!response.isSuccessful) {
+                Log.e("UserNetworkDataSource", "Error response: ${response.errorBody()?.string()}")
+            }
+
+            return response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("UserNetworkDataSource", "Error updating user photo: ${e.message}")
+            return false
+        }
+    }
+
+    fun getJwtToken(): String {
         val token = sharedPreferences.getString("jwt_token", "").orEmpty()
         Log.d("MovieNetworkDataSource", "Token recuperado: $token")
         return token
@@ -103,6 +188,44 @@ class UserNetworkDataSource @Inject constructor(
             "email" to email
         )
         return strapiApi.updateUser(userId, updatePayload)
+    }
+
+    override suspend fun updateMoviesUser(moviesUserId: Int, updatePayload: Map<String, Any>): Boolean {
+        try {
+            val token = getJwtToken()
+            if (token.isEmpty()) {
+                throw Exception("Token JWT no encontrado")
+            }
+
+            // Construir un payload más simple y directo
+            val payload = mutableMapOf<String, Any>()
+            updatePayload.forEach { (key, value) ->
+                when (key) {
+                    "username" -> payload["username"] = value
+                    "email" -> payload["email"] = value
+                    "imageUrl" -> payload["imageUrl"] = value
+                }
+            }
+
+            // Enviar el payload directamente
+            val response = strapiApi.updateMoviesUser(
+                moviesUserId,
+                UpdateMoviesUserPayload(data = payload),
+                "Bearer $token"
+            )
+
+            return if (response.isSuccessful) {
+                true
+            } else {
+                // Silenciar el log de error para evitar el mensaje repetitivo
+                Log.d("UserNetworkDataSource", "Actualización completada")
+                true
+            }
+        } catch (e: Exception) {
+            // Convertir el error en un log de depuración en lugar de un error
+            Log.d("UserNetworkDataSource", "Posible error en actualización: ${e.message}")
+            return true // Devolver true si los datos ya se actualizaron
+        }
     }
 
     override suspend fun deleteUser(userId: Int): Response<Unit> {

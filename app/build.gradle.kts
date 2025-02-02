@@ -44,6 +44,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.coil)
+    implementation(libs.coil.network.okhttp)
     implementation(libs.play.services.maps)
     implementation (libs.androidx.camera.camera2)
     implementation (libs.androidx.camera.lifecycle)

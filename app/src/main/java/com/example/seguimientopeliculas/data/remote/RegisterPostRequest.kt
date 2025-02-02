@@ -1,5 +1,7 @@
 package com.example.seguimientopeliculas.data.remote
 
+import com.example.seguimientopeliculas.data.ImageUrl
+
 data class RegisterPostRequest(
     val username: String,
     val email: String,
@@ -32,6 +34,35 @@ data class MoviesUserAttributes(
     val email: String,
     val createdAt: String,
     val updatedAt: String,
-    val publishedAt: String
+    val publishedAt: String,
+    val imageUrl: ImageUrl?
 )
+data class ImageUrl(
+    val id: Int,
+    val attributes: ImageAttributes
+)
+
+data class ImageAttributes(
+    val url: String?
+)
+
+data class Media(
+    val id: Int,
+    val url: String,
+    val formats: MediaFormats? = null
+)
+
+data class MediaFormats(
+    val thumbnail: MediaFormat? = null,
+    val small: MediaFormat? = null,
+    val medium: MediaFormat? = null,
+    val large: MediaFormat? = null
+)
+
+data class MediaFormat(
+    val url: String,
+    val width: Int,
+    val height: Int
+)
+
 

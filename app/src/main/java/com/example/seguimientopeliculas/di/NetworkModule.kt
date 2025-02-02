@@ -71,8 +71,9 @@ class NetworkModule {
     @Singleton
     fun provideUserNetworkDataSource(
         strapiApi: StrapiApi,
-        sharedPreferences: SharedPreferences
+        sharedPreferences: SharedPreferences,
+        @ApplicationContext context: Context
     ): UserRemoteDataSource {
-        return UserNetworkDataSource(strapiApi, sharedPreferences)
+        return UserNetworkDataSource(strapiApi, sharedPreferences, context)
     }
 }

@@ -10,7 +10,9 @@ fun MoviesUserEntity.toExternal() = MoviesUser(
     username = this.username,
     email = this.email,
     password = this.password,
-    userId = this.user_Id
+    userId = this.user_Id,
+    imageUrl = null, // Set imageUrl to null
+    image = null
 )
 
 // De UserEntity a MoviesUser
@@ -19,7 +21,9 @@ fun UserEntity.toExternal() = MoviesUser(
     username = this.username,
     email = this.email,
     password = this.password,
-    userId = this.id
+    userId = this.id,
+    imageUrl = null, // Set imageUrl to null
+    image = null
 )
 fun MoviesUser.toUserEntityFromMoviesUser(): UserEntity {
     return UserEntity(

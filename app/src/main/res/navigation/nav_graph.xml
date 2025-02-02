@@ -134,4 +134,12 @@
         <action
             android:id="@+id/action_profileFragment_to_loginFragment"
             app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_profileFragment_to_cameraPreviewFragment"
+            app:destination="@id/cameraPreviewFragment" />
+    <fragment
+        android:id="@+id/cameraPreviewFragment"
+        android:name="com.example.seguimientopeliculas.ui.camera.CameraPreviewFragment"
+        android:label="Tomar Foto"
+        tools:layout="@layout/fragment_camera_preview"/>
 </navigation>

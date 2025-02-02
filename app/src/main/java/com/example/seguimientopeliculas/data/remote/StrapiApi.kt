@@ -1,16 +1,20 @@
 package com.example.seguimientopeliculas.data.remote
 
+import com.example.seguimientopeliculas.data.UpdateMoviesUserPayload
 import com.example.seguimientopeliculas.login.LoginResponse
 import com.example.seguimientopeliculas.login.LoginRequestApi
 import com.example.seguimientopeliculas.login.RegisterResponse
 import com.example.seguimientopeliculas.login.UserResponse
+import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -50,7 +54,8 @@ interface StrapiApi {
 
     @GET("movies-users")
     suspend fun getMoviesUserByUserId(
-        @Query("filters[users_permissions_user][id][\$eq]") userId: Int
+        @Query("filters[users_permissions_user][id][\$eq]") userId: Int,
+        @Query("populate") populate: String = "*"
     ): Response<MoviesUserResponse>
 
     @PUT("films/{id}")
@@ -84,5 +89,19 @@ interface StrapiApi {
     suspend fun deleteMoviesUser(
         @Path("id") id: Int
     ): Response<Unit>
+
+    @Multipart
+    @POST("upload")
+    suspend fun uploadFile(
+        @Part file: MultipartBody.Part,
+        @Header("Authorization") token: String
+    ): Response<List<UploadResponse>>
+
+    @PUT("movies-users/{id}")
+    suspend fun updateMoviesUser(
+        @Path("id") id: Int,
+        @Body payload: UpdateMoviesUserPayload,
+        @Header("Authorization") token: String
+    ): Response<MoviesUserResponse>
 }
 
