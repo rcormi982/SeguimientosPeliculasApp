@@ -44,6 +44,8 @@ android {
 }
 
 dependencies {
+    implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
     implementation(libs.coil)
     implementation(libs.coil.network.okhttp)
     implementation(libs.play.services.maps)

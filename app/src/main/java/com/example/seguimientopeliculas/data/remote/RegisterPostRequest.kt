@@ -1,7 +1,5 @@
 package com.example.seguimientopeliculas.data.remote
 
-import com.example.seguimientopeliculas.data.ImageUrl
-
 data class RegisterPostRequest(
     val username: String,
     val email: String,
@@ -43,7 +41,7 @@ data class ImageUrlWrapper(
 )
 
 data class ImageUrlData(
-    val id: Int,
+    val id: Int?,
     val attributes: ImageAttributes
 )
 

@@ -1,7 +1,5 @@
 package com.example.seguimientopeliculas.data
 
-import com.example.seguimientopeliculas.data.remote.ImageUrlData
-
 data class User(
     val id: Int,
     val username: String,
@@ -32,8 +30,14 @@ data class UpdateData(
 )
 
 data class UpdateImageUrl(
-    val id: Int? = null,
-    val data: ImageUrlData? = null
+    val data: ImageUrlData
 )
 
+data class ImageUrlData(
+    val id: Int? = null,
+    val attributes: ImageAttributes
+)
 
+data class ImageAttributes(
+    val url: String
+)

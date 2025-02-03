@@ -43,8 +43,6 @@ class NetworkModule {
                 val token = sharedPreferences.getString("jwt", null)
                 if (!token.isNullOrEmpty()) {
                     requestBuilder.addHeader("Authorization", "Bearer $token")
-                } else {
-                    Log.w("NetworkModule", "El token JWT no está disponible")
                 }
                 chain.proceed(requestBuilder.build())
             }

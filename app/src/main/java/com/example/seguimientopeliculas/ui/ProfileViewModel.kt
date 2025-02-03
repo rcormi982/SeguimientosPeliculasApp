@@ -34,23 +34,20 @@ class ProfileViewModel @Inject constructor(
     }
 
     suspend fun uploadPhoto(photoUri: Uri, moviesUserId: Int): Boolean {
-        try {
-            // Subir la foto
-            val uploadedPhotoUrl = userRemoteDataSource.uploadProfilePhoto(photoUri, moviesUserId)
-
-            if (uploadedPhotoUrl != null) {
-                val success = userRemoteDataSource.updateUserPhoto(moviesUserId, uploadedPhotoUrl)
-                if (success) {
-                    _photoUrl.value = uploadedPhotoUrl
-                    return true
-                }
+        return try {
+            val uploadedUrl = userRemoteDataSource.uploadProfilePhoto(photoUri, moviesUserId)
+            if (uploadedUrl != null) {
+                _photoUrl.value = uploadedUrl
+                true
+            } else {
+                false
             }
-            return false
         } catch (e: Exception) {
             Log.e("ProfileViewModel", "Error al subir la foto: ${e.message}")
-            return false
+            false
         }
     }
+
     fun updatePhotoUrl(url: String) {
         _photoUrl.value = url
     }
