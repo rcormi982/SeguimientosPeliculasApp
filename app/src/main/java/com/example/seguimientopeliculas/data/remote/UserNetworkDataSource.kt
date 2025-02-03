@@ -8,7 +8,8 @@ import com.example.seguimientopeliculas.data.Movie
 import com.example.seguimientopeliculas.data.MoviesUser
 import com.example.seguimientopeliculas.data.ImageUrl
 import com.example.seguimientopeliculas.data.UpdateMoviesUserPayload
-import com.example.seguimientopeliculas.data.DataPayload
+import com.example.seguimientopeliculas.data.UpdateData
+import com.example.seguimientopeliculas.data.UpdateImageUrl
 import com.example.seguimientopeliculas.login.RegisterResponse
 import com.example.seguimientopeliculas.login.UserResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -18,7 +19,6 @@ import retrofit2.Response
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
-
 
 @Singleton
 class UserNetworkDataSource @Inject constructor(
@@ -44,7 +44,6 @@ class UserNetworkDataSource @Inject constructor(
             val userId = registerResponse.body()?.user?.id
             if (userId != null) {
                 try {
-                    // Crea el registro correspondiente en movies_user
                     val moviesUserPayload = MoviesUserRequest(
                         data = RegisterUserData(
                             users_permissions_user = userId,
@@ -59,15 +58,12 @@ class UserNetworkDataSource @Inject constructor(
                             "RegisterUser",
                             "Error al registrar en movies_user: ${moviesUserResponse.errorBody()?.string()}"
                         )
-                        // No lanzamos excepción, solo registramos el error para no interrumpir el flujo
                     }
                 } catch (e: Exception) {
                     Log.e("RegisterUser", "Excepción al crear movies_user: ${e.message}")
-                    // Evitamos que la excepción interrumpa el flujo
                 }
             }
         } else {
-            // Manejo de error explícito del registro en `users`
             val errorBody = registerResponse.errorBody()?.string()
             Log.e("RegisterUser", "Error al registrar usuario: $errorBody")
         }
@@ -75,13 +71,12 @@ class UserNetworkDataSource @Inject constructor(
         return registerResponse
     }
 
-
     override suspend fun fetchMoviesUserId(userId: Int): Int? {
         val response = strapiApi.getMoviesUserByUserId(userId)
 
         return if (response.isSuccessful) {
             val moviesUserLoginData = response.body()?.data?.firstOrNull()
-            moviesUserLoginData?.id // Devuelve el ID de MoviesUser si existe
+            moviesUserLoginData?.id
         } else {
             val errorBody = response.errorBody()?.string()
             Log.e("UserNetworkDataSource", "Error al obtener MoviesUserId: $errorBody")
@@ -111,8 +106,8 @@ class UserNetworkDataSource @Inject constructor(
         val moviesUserData = response.body()?.data?.firstOrNull()
             ?: throw Exception("No se encontraron datos del MoviesUser")
 
-        // Extraer la URL de la imagen correctamente
-        val imageUrl = moviesUserData.attributes.imageUrl?.url
+        // Extraer la URL de la imagen correctamente siguiendo la estructura anidada
+        val imageUrl = moviesUserData.attributes.imageUrl?.data?.attributes?.url
 
         // Agregar registro de depuración para verificar la URL
         Log.d("UserNetworkDataSource", "URL de foto de perfil: $imageUrl")
@@ -123,8 +118,8 @@ class UserNetworkDataSource @Inject constructor(
             email = moviesUserData.attributes.email,
             password = "",
             userId = user.id,
-            imageUrl = imageUrl, // Usar la URL de la imagen extraída
-            image = null // No necesitas mantener el objeto completo en este caso
+            imageUrl = imageUrl,
+            image = null
         )
     }
 
@@ -158,13 +153,22 @@ class UserNetworkDataSource @Inject constructor(
                 throw Exception("Token JWT no encontrado")
             }
 
-            val payload = UpdateMoviesUserPayload(
-                data = DataPayload(imageUrl = photoUrl)
+            val updateData = UpdateData(
+                imageUrl = UpdateImageUrl(
+                    data = ImageUrlData(
+                        id = 0, // El ID se asignará en el servidor
+                        attributes = ImageAttributes(
+                            url = photoUrl,
+                            formats = null
+                        )
+                    )
+                )
             )
+
+            val payload = UpdateMoviesUserPayload(data = updateData)
 
             val response = strapiApi.updateMoviesUser(moviesUserId, payload, "Bearer $token")
 
-            // Añadir logs para debug
             if (!response.isSuccessful) {
                 Log.e("UserNetworkDataSource", "Error response: ${response.errorBody()?.string()}")
             }
@@ -197,70 +201,56 @@ class UserNetworkDataSource @Inject constructor(
                 throw Exception("Token JWT no encontrado")
             }
 
-            // Construir un payload más simple y directo
-            val payload = mutableMapOf<String, Any>()
-            updatePayload.forEach { (key, value) ->
-                when (key) {
-                    "username" -> payload["username"] = value
-                    "email" -> payload["email"] = value
-                    "imageUrl" -> payload["imageUrl"] = value
-                }
-            }
+            // Crear el payload con la estructura correcta para Strapi
+            val updateData = UpdateData(
+                username = updatePayload["username"] as? String,
+                email = updatePayload["email"] as? String
+            )
 
-            // Enviar el payload directamente
             val response = strapiApi.updateMoviesUser(
                 moviesUserId,
-                UpdateMoviesUserPayload(data = payload),
+                UpdateMoviesUserPayload(data = updateData),
                 "Bearer $token"
             )
 
-            return if (response.isSuccessful) {
-                true
-            } else {
-                // Silenciar el log de error para evitar el mensaje repetitivo
-                Log.d("UserNetworkDataSource", "Actualización completada")
-                true
+            if (!response.isSuccessful) {
+                val errorBody = response.errorBody()?.string()
+                Log.e("UserNetworkDataSource", "Error en actualización: $errorBody")
+                return false
             }
+
+            return true
         } catch (e: Exception) {
-            // Convertir el error en un log de depuración en lugar de un error
-            Log.d("UserNetworkDataSource", "Posible error en actualización: ${e.message}")
-            return true // Devolver true si los datos ya se actualizaron
+            Log.e("UserNetworkDataSource", "Error en actualización: ${e.message}")
+            return false
         }
     }
 
     override suspend fun deleteUser(userId: Int): Response<Unit> {
-        val response = strapiApi.deleteUser(userId)
-        return response
+        return strapiApi.deleteUser(userId)
     }
 
     suspend fun deleteMoviesUser(moviesUserId: Int): Response<Unit> {
-        val response = strapiApi.deleteMoviesUser(moviesUserId)
-        return response
+        return strapiApi.deleteMoviesUser(moviesUserId)
     }
 
-
     override suspend fun getMoviesForUser(userId: Int): List<Movie> {
-        // Llamada al endpoint con el token y filtros
         val response = strapiApi.getMoviesByUser(
             moviesUserId = userId,
             populate = "movies_users,users_permissions_user"
         )
 
         if (response.isSuccessful) {
-            // Obtener el objeto MovieListRaw
-            val movieListRaw: MovieListRaw? = response.body() // Mapear la respuesta a MovieListRaw
+            val movieListRaw: MovieListRaw? = response.body()
             if (movieListRaw == null || movieListRaw.data.isNullOrEmpty()) {
-                // Si la respuesta está vacía o no tiene películas
                 Log.e("UserNetworkDataSource", "No se encontraron películas en la respuesta.")
                 return emptyList()
             }
 
-            // Procesar los datos obtenidos para convertirlos en objetos Movie
             return movieListRaw.data.mapNotNull { movieRaw ->
-                movieRaw.toMovie() // Convertimos cada MovieRaw a Movie
+                movieRaw.toMovie()
             }
         } else {
-            // Manejar el caso de error
             val errorBody = response.errorBody()?.string()
             Log.e("UserNetworkDataSource", "Error en la respuesta: $errorBody")
             throw Exception("Error al obtener películas del usuario: $errorBody")
@@ -275,15 +265,13 @@ class UserNetworkDataSource @Inject constructor(
             Status = movie.status,
             Premiere = movie.premiere,
             Comments = movie.comments,
-            movies_users = listOf(movie.moviesUserId ?: 0), // Asegurar que el backend recibe un Int
-            //users_permissions_user = movie.moviesUserId ?: 0 // Usar un valor predeterminado si es nulo
+            movies_users = listOf(movie.moviesUserId ?: 0)
         )
 
         val moviePayload = MoviePostRequest(
             data = movieAttributes
         )
 
-        // Pasa el token JWT en la llamada a strapiApi
         val response = strapiApi.createMovieForUser(moviePayload, jwt)
 
         if (response.isSuccessful) {
@@ -306,4 +294,3 @@ class UserNetworkDataSource @Inject constructor(
         )
     }
 }
-

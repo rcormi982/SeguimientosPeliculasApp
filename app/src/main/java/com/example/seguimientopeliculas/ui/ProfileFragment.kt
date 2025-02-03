@@ -208,20 +208,36 @@ class ProfileFragment : Fragment() {
         val moviesUserId = obtenerMoviesUserId()
         if (moviesUserId == -1) throw Exception("MoviesUser ID no encontrado en SharedPreferences")
 
-        val updatePayload = mutableMapOf<String, Any>(
-            "username" to username,
-            "email" to email
-        )
+        // Actualizar usuario en movies-users
+        val updatePayload = mutableMapOf<String, Any>()
 
-        // Añadir la URL de la imagen si está disponible
+        // Solo incluimos campos que han cambiado
+        if (username.isNotBlank()) {
+            updatePayload["username"] = username
+        }
+        if (email.isNotBlank()) {
+            updatePayload["email"] = email
+        }
+
+        // Si hay una URL de imagen, la incluimos
         viewModel.photoUrl.value?.let { url ->
             updatePayload["imageUrl"] = url
         }
 
         val success = userRemoteDataSource.updateMoviesUser(moviesUserId, updatePayload)
+
         if (success) {
+            // También actualizar el usuario principal si es necesario
+            val userId = obtenerUserId()
+            if (userId != -1) {
+                val userUpdateResponse = userRemoteDataSource.updateUser(userId, username, email)
+                if (!userUpdateResponse.isSuccessful) {
+                    Log.e("ProfileFragment", "Error actualizando usuario principal: ${userUpdateResponse.errorBody()?.string()}")
+                }
+            }
             loadUserData() // Recargar datos si la actualización fue exitosa
         }
+
         return success
     }
 

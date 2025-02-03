@@ -35,15 +35,31 @@ data class MoviesUserAttributes(
     val createdAt: String,
     val updatedAt: String,
     val publishedAt: String,
-    val imageUrl: ImageUrl?
+    val imageUrl: ImageUrlWrapper?
 )
-data class ImageUrl(
+
+data class ImageUrlWrapper(
+    val data: ImageUrlData?
+)
+
+data class ImageUrlData(
     val id: Int,
     val attributes: ImageAttributes
 )
 
 data class ImageAttributes(
-    val url: String?
+    val url: String?,
+    val formats: ImageFormats?
+)
+
+data class ImageFormats(
+    val thumbnail: ImageFormat?
+)
+
+data class ImageFormat(
+    val url: String?,
+    val width: Int?,
+    val height: Int?
 )
 
 data class Media(
@@ -64,5 +80,3 @@ data class MediaFormat(
     val width: Int,
     val height: Int
 )
-
-
