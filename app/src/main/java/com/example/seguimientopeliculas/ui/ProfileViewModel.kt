@@ -35,9 +35,9 @@ class ProfileViewModel @Inject constructor(
 
     suspend fun uploadPhoto(photoUri: Uri, moviesUserId: Int): Boolean {
         return try {
-            val uploadedUrl = userRemoteDataSource.uploadProfilePhoto(photoUri, moviesUserId)
-            if (uploadedUrl != null) {
-                _photoUrl.value = uploadedUrl
+            val uploadResult = userRemoteDataSource.uploadProfilePhoto(photoUri, moviesUserId)
+            if (uploadResult != null) {
+                _photoUrl.value = uploadResult.url  // Ahora usamos .url del PhotoUploadResult
                 true
             } else {
                 false

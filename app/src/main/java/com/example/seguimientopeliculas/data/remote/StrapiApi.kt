@@ -6,6 +6,7 @@ import com.example.seguimientopeliculas.login.LoginRequestApi
 import com.example.seguimientopeliculas.login.RegisterResponse
 import com.example.seguimientopeliculas.login.UserResponse
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -94,6 +95,9 @@ interface StrapiApi {
     @POST("upload")
     suspend fun uploadFile(
         @Part file: MultipartBody.Part,
+        @Part("refId") refId: RequestBody,
+        @Part("ref") ref: RequestBody,
+        @Part("field") field: RequestBody,
         @Header("Authorization") token: String
     ): Response<List<UploadResponse>>
 
@@ -104,4 +108,3 @@ interface StrapiApi {
         @Header("Authorization") token: String
     ): Response<MoviesUserResponse>
 }
-

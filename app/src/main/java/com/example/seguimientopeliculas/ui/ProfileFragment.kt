@@ -8,7 +8,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
@@ -33,10 +32,6 @@ import com.example.seguimientopeliculas.databinding.FragmentProfileBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -60,7 +55,11 @@ class ProfileFragment : Fragment() {
         if (isGranted) {
             takePhoto()
         } else {
-            Toast.makeText(requireContext(), "Se necesita permiso de cámara para esta función", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                "Se necesita permiso de cámara para esta función",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -70,7 +69,11 @@ class ProfileFragment : Fragment() {
         if (isGranted) {
             openGallery()
         } else {
-            Toast.makeText(requireContext(), "Se necesita permiso de almacenamiento para esta función", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                requireContext(),
+                "Se necesita permiso de almacenamiento para esta función",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -144,7 +147,8 @@ class ProfileFragment : Fragment() {
 
             lifecycleScope.launch {
                 try {
-                    val success = updateUser(username, email, if (password.isBlank()) null else password)
+                    val success =
+                        updateUser(username, email, if (password.isBlank()) null else password)
                     if (success) {
                         Toast.makeText(
                             requireContext(),
@@ -219,6 +223,7 @@ class ProfileFragment : Fragment() {
             ) == PackageManager.PERMISSION_GRANTED -> {
                 takePhoto()
             }
+
             else -> {
                 requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
@@ -236,6 +241,7 @@ class ProfileFragment : Fragment() {
                     ) == PackageManager.PERMISSION_GRANTED -> {
                         openGallery()
                     }
+
                     else -> {
                         requestGalleryPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
                     }
@@ -250,6 +256,7 @@ class ProfileFragment : Fragment() {
                     ) == PackageManager.PERMISSION_GRANTED -> {
                         openGallery()
                     }
+
                     else -> {
                         requestGalleryPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
                     }
@@ -355,12 +362,37 @@ class ProfileFragment : Fragment() {
     }
 
     private suspend fun updateUser(username: String, email: String, password: String?): Boolean {
+        val userId = obtenerUserId()
         val moviesUserId = obtenerMoviesUserId()
-        if (moviesUserId == -1) throw Exception("MoviesUser ID no encontrado en SharedPreferences")
+
+        if (userId == -1 || moviesUserId == -1) {
+            throw Exception("User ID o MoviesUser ID no encontrado en SharedPreferences")
+        }
 
         try {
-            // Preparar el payload base
-            val updatePayload = mutableMapOf<String, Any>(
+            // Preparar payload para actualizar User
+            val userUpdatePayload = mutableMapOf(
+                "username" to username,
+                "email" to email
+            )
+
+            // Variable para rastrear si se cambió la contraseña
+            val passwordChanged = !password.isNullOrBlank()
+
+            // Agregar contraseña si se proporciona
+            if (passwordChanged) {
+                userUpdatePayload["password"] = password!!
+            }
+
+            // Actualizar User
+            val userUpdateResponse = strapiApi.updateUser(userId, userUpdatePayload)
+            if (!userUpdateResponse.isSuccessful) {
+                Log.e("ProfileFragment", "Error al actualizar User")
+                return false
+            }
+
+            // Preparar payload para actualizar MoviesUser
+            val moviesUserUpdatePayload = mutableMapOf<String, Any>(
                 "username" to username,
                 "email" to email
             )
@@ -369,31 +401,43 @@ class ProfileFragment : Fragment() {
             val photoUri = viewModel.photo.value
             if (photoUri != Uri.EMPTY) {
                 Log.d("ProfileFragment", "Intentando subir nueva foto: $photoUri")
-                val photoUrl = userRemoteDataSource.uploadProfilePhoto(photoUri, moviesUserId)
-                if (photoUrl != null) {
-                    Log.d("ProfileFragment", "Foto subida exitosamente. URL: $photoUrl")
-                    updatePayload["imageUrl"] = photoUrl
-                    viewModel.updatePhotoUrl(photoUrl)
-                } else {
-                    Log.e("ProfileFragment", "Error al subir la foto")
-                    Toast.makeText(
-                        requireContext(),
-                        "Error al subir la foto de perfil",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                val uploadResult = userRemoteDataSource.uploadProfilePhoto(photoUri, moviesUserId)
+                if (uploadResult != null) {
+                    Log.d("ProfileFragment", "Foto subida exitosamente. URL: ${uploadResult.url}")
+
+                    // Intentar actualizar la foto del usuario
+                    val photoUpdateSuccess = userRemoteDataSource.updateUserPhoto(moviesUserId, uploadResult)
+                    if (!photoUpdateSuccess) {
+                        Log.e("ProfileFragment", "Error al actualizar la foto en el usuario")
+                    }
+
+                    // Si la foto se sube correctamente, la agregamos al payload
+                    moviesUserUpdatePayload["imageUrl"] = uploadResult.id
+                    viewModel.updatePhotoUrl(uploadResult.url)
                 }
             }
 
-            val success = userRemoteDataSource.updateMoviesUser(moviesUserId, updatePayload)
-            if (success) {
-                Log.d("ProfileFragment", "Actualización exitosa")
-                Log.d("ProfileFragment", "Payload enviado: $updatePayload")
-                loadUserData()
-                return true
-            } else {
-                Log.e("ProfileFragment", "Error en la actualización")
+            // Actualizar MoviesUser
+            val moviesUserUpdateSuccess = userRemoteDataSource.updateMoviesUser(moviesUserId, moviesUserUpdatePayload)
+            if (!moviesUserUpdateSuccess) {
+                Log.e("ProfileFragment", "Error al actualizar MoviesUser")
                 return false
             }
+
+            // Si se cambió la contraseña, cerrar sesión
+            if (passwordChanged) {
+                requireActivity().runOnUiThread {
+                    Toast.makeText(
+                        requireContext(),
+                        "Contraseña actualizada. Por favor, inicie sesión nuevamente.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    logoutUser()
+                }
+                return true
+            }
+
+            return true
         } catch (e: Exception) {
             Log.e("ProfileFragment", "Error en actualización", e)
             return false

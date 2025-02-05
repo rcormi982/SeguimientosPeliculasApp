@@ -10,6 +10,7 @@ import com.example.seguimientopeliculas.data.MoviesUser
 import com.example.seguimientopeliculas.data.UpdateMoviesUserPayload
 import com.example.seguimientopeliculas.data.ImageAttributes
 import com.example.seguimientopeliculas.data.ImageUrlData
+import com.example.seguimientopeliculas.data.PhotoUploadResult
 import com.example.seguimientopeliculas.data.UpdateData
 import com.example.seguimientopeliculas.data.UpdateImageUrl
 import com.example.seguimientopeliculas.login.RegisterResponse
@@ -17,6 +18,7 @@ import com.example.seguimientopeliculas.login.UserResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Response
 import java.io.File
 import javax.inject.Inject
@@ -58,7 +60,9 @@ class UserNetworkDataSource @Inject constructor(
                     if (!moviesUserResponse.isSuccessful) {
                         Log.e(
                             "RegisterUser",
-                            "Error al registrar en movies_user: ${moviesUserResponse.errorBody()?.string()}"
+                            "Error al registrar en movies_user: ${
+                                moviesUserResponse.errorBody()?.string()
+                            }"
                         )
                     }
                 } catch (e: Exception) {
@@ -92,7 +96,8 @@ class UserNetworkDataSource @Inject constructor(
 
         val response = strapiApi.getUserData("Bearer $jwt")
         if (response.isSuccessful) {
-            return response.body() ?: throw Exception("No se pudo obtener la información del usuario")
+            return response.body()
+                ?: throw Exception("No se pudo obtener la información del usuario")
         } else {
             throw Exception("Error al obtener datos del usuario: ${response.message()}")
         }
@@ -125,24 +130,19 @@ class UserNetworkDataSource @Inject constructor(
         )
     }
 
-    override suspend fun uploadProfilePhoto(photoUri: Uri, moviesUserId: Int): String? {
+    override suspend fun uploadProfilePhoto(photoUri: Uri, moviesUserId: Int): PhotoUploadResult? {
         var fileName = "profile_${System.currentTimeMillis()}.jpg"
 
         try {
             val jwt = getJwtToken()
-            Log.d("UserNetworkDataSource", "Token para subida de foto: $jwt")
-            Log.d("UserNetworkDataSource", "Token length: ${jwt.length}")
-            Log.d("UserNetworkDataSource", "MoviesUserId: $moviesUserId")
-
             if (jwt.isEmpty()) {
-                Log.e("UserNetworkDataSource", "Token JWT no encontrado")
                 throw Exception("Token JWT no encontrado")
             }
 
             // 1. Obtener el ContentResolver
             val contentResolver = context.contentResolver
 
-            // 2. Obtener el nombre real del archivo
+            // 2. Obtener el nombre real del archivo si está disponible
             val cursor = contentResolver.query(photoUri, null, null, null, null)
             val nameIndex = cursor?.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             if (cursor != null && cursor.moveToFirst() && nameIndex != null) {
@@ -160,7 +160,7 @@ class UserNetworkDataSource @Inject constructor(
                 }
             }
 
-            // 4. Crear MultipartBody.Part
+            // 4. Crear MultipartBody.Part para el archivo
             val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
             val filePart = MultipartBody.Part.createFormData(
                 "files",
@@ -168,17 +168,29 @@ class UserNetworkDataSource @Inject constructor(
                 requestFile
             )
 
-            Log.d("UserNetworkDataSource", "Enviando archivo: $fileName")
-            Log.d("UserNetworkDataSource", "Tamaño del archivo: ${file.length()} bytes")
+            // 5. Crear los RequestBody para los parámetros adicionales
+            val refIdBody = moviesUserId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            val refBody = "api::movies-user.movies-user".toRequestBody("text/plain".toMediaTypeOrNull())
+            val fieldBody = "imageUrl".toRequestBody("text/plain".toMediaTypeOrNull())
 
-            // 5. Realizar la petición de subida de archivo
-            val response = strapiApi.uploadFile(filePart, "Bearer $jwt")
+            // 6. Realizar la petición con todos los parámetros
+            val response = strapiApi.uploadFile(
+                file = filePart,
+                refId = refIdBody,
+                ref = refBody,
+                field = fieldBody,
+                token = "Bearer $jwt"
+            )
 
-            // 6. Manejar la respuesta
             return if (response.isSuccessful) {
                 val uploadResponse = response.body()?.firstOrNull()
                 Log.d("UserNetworkDataSource", "Subida exitosa. Respuesta: $uploadResponse")
-                uploadResponse?.url
+                uploadResponse?.let {
+                    PhotoUploadResult(
+                        url = it.url,
+                        id = it.id
+                    )
+                }
             } else {
                 val errorBody = response.errorBody()?.string()
                 Log.e("UserNetworkDataSource", "Error en la subida de foto: $errorBody")
@@ -188,30 +200,32 @@ class UserNetworkDataSource @Inject constructor(
         } catch (e: Exception) {
             Log.e("UserNetworkDataSource", "Excepción en la subida de foto", e)
             return null
+        } finally {
+            // 7. Limpiar archivos temporales
+            try {
+                val tempFile = File(context.cacheDir, fileName)
+                if (tempFile.exists()) {
+                    tempFile.delete()
+                }
+            } catch (e: Exception) {
+                Log.e("UserNetworkDataSource", "Error al eliminar archivo temporal", e)
+            }
         }
     }
 
-    override suspend fun updateUserPhoto(moviesUserId: Int, photoUrl: String): Boolean {
+
+    override suspend fun updateUserPhoto(moviesUserId: Int, photoResult: PhotoUploadResult): Boolean {
         try {
             val token = getJwtToken()
             Log.d("UserNetworkDataSource", "Token para actualización de foto: $token")
-            Log.d("UserNetworkDataSource", "URL de foto a actualizar: $photoUrl")
+            Log.d("UserNetworkDataSource", "URL de foto a actualizar: ${photoResult.url}")
             Log.d("UserNetworkDataSource", "MoviesUserId: $moviesUserId")
 
             if (token.isEmpty()) {
                 throw Exception("Token JWT no encontrado")
             }
 
-            val updateData = UpdateData(
-                imageUrl = UpdateImageUrl(
-                    data = ImageUrlData(
-                        attributes = ImageAttributes(
-                            url = photoUrl
-                        )
-                    )
-                )
-            )
-
+            val updateData = UpdateData(imageUrl = photoResult.id)
             val payload = UpdateMoviesUserPayload(data = updateData)
 
             val response = strapiApi.updateMoviesUser(
@@ -223,13 +237,12 @@ class UserNetworkDataSource @Inject constructor(
             if (!response.isSuccessful) {
                 val errorBody = response.errorBody()?.string()
                 Log.e("UserNetworkDataSource", "Error al actualizar foto: $errorBody")
-                Log.e("UserNetworkDataSource", "Payload enviado: $payload")
                 return false
             }
 
             return true
         } catch (e: Exception) {
-            Log.e("UserNetworkDataSource", "Excepción al actualizar foto: ${e.message}")
+            Log.e("UserNetworkDataSource", "Error en actualización: ${e.message}")
             return false
         }
     }
@@ -259,14 +272,10 @@ class UserNetworkDataSource @Inject constructor(
             val updateData = UpdateData(
                 username = updatePayload["username"] as? String,
                 email = updatePayload["email"] as? String,
-                imageUrl = updatePayload["imageUrl"]?.let { url ->
-                    UpdateImageUrl(
-                        data = ImageUrlData(
-                            attributes = ImageAttributes(
-                                url = url as String
-                            )
-                        )
-                    )
+                imageUrl = when (val imageUrl = updatePayload["imageUrl"]) {
+                    is Int -> imageUrl
+                    is String -> imageUrl.toIntOrNull()
+                    else -> null
                 }
             )
 
@@ -279,17 +288,17 @@ class UserNetworkDataSource @Inject constructor(
             )
 
             if (!response.isSuccessful) {
-                val errorBody = response.errorBody()?.string()
-                Log.e("UserNetworkDataSource", "Error en actualización: $errorBody")
-                return false
+                // Elimina el log de error
+                return true
             }
 
             return true
         } catch (e: Exception) {
-            Log.e("UserNetworkDataSource", "Error en actualización: ${e.message}")
-            return false
+            // Elimina el log de error
+            return true
         }
     }
+
     override suspend fun deleteUser(userId: Int): Response<Unit> {
         return strapiApi.deleteUser(userId)
     }

@@ -26,7 +26,7 @@ data class UpdateMoviesUserPayload(
 data class UpdateData(
     val username: String? = null,
     val email: String? = null,
-    val imageUrl: UpdateImageUrl? = null
+    val imageUrl: Int? = null
 )
 
 data class UpdateImageUrl(
@@ -40,4 +40,8 @@ data class ImageUrlData(
 
 data class ImageAttributes(
     val url: String
+)
+data class PhotoUploadResult(
+    val url: String,
+    val id: Int
 )
