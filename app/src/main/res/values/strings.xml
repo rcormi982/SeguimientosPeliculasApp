@@ -43,4 +43,6 @@
     <string name="nav_edit">Editar</string>
     <string name="nav_show_movies">Películas</string>
     <string name="take_photo">Tomar foto</string>
+    <string name="nav_map">Cines</string>
+    <string name="cinemas">CINES CERCANOS</string>
 </resources>

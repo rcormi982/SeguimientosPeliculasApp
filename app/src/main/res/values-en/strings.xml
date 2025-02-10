@@ -44,4 +44,6 @@
     <string name="nav_edit">Edit</string>
     <string name="nav_show_movies">Movies</string>
     <string name="take_photo">Take photo</string>
+    <string name="nav_map">Cines</string>
+    <string name="cinemas">NEARBY CINEMAS</string>
 </resources>

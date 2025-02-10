@@ -64,6 +64,11 @@ class MainActivity : AppCompatActivity() {
                     navController.navigate(R.id.profileFragment)
                     true
                 }
+                R.id.nav_map -> {
+                    Log.d("MainActivity", "Navegando a MapsFragment")
+                    navController.navigate(R.id.mapsFragment)
+                    true
+                }
                 else -> false
             }
         }
