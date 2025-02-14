@@ -2,8 +2,11 @@ package com.example.seguimientopeliculas.ui
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -34,6 +37,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import android.provider.Settings
+
 
 @AndroidEntryPoint
 class MapsFragment : Fragment(), OnMapReadyCallback {
@@ -125,23 +130,42 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
 
         googleMap.isMyLocationEnabled = true
 
+        val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val isGpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+
+        if (!isGpsEnabled) {
+            showEnableLocationDialog()
+            return
+        }
+
         fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
             location?.let {
                 val currentLatLng = LatLng(it.latitude, it.longitude)
                 googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, 15f))
                 searchNearbyCinemas()
             } ?: run {
-                Toast.makeText(
-                    requireContext(),
-                    "No se pudo obtener la ubicación actual",
-                    Toast.LENGTH_SHORT
-                ).show()
+                showEnableLocationDialog()
             }
         }.addOnFailureListener {
-            Toast.makeText(requireContext(), "Error al obtener la ubicación", Toast.LENGTH_SHORT)
-                .show()
+            showEnableLocationDialog()
         }
     }
+
+    private fun showEnableLocationDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Ubicación desactivada")
+            .setMessage("Para encontrar cines cercanos, necesitas activar la ubicación. ¿Deseas activarla?")
+            .setPositiveButton("Activar") { _, _ ->
+                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                startActivity(intent)
+            }
+            .setNegativeButton("Cancelar") { dialog, _ ->
+                dialog.dismiss()
+                Toast.makeText(requireContext(), "No se activó la ubicación", Toast.LENGTH_SHORT).show()
+            }
+            .show()
+    }
+
 
     private fun searchNearbyCinemas() {
         if (ContextCompat.checkSelfPermission(
