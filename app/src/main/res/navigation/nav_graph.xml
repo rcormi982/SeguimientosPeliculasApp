@@ -126,6 +126,7 @@
             android:id="@+id/action_movieListEditFragment_to_editMovieFragment"
             app:destination="@id/editMovieFragment" />
     </fragment>
+    <!-- Fragmento para Editar Perfil -->
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.example.seguimientopeliculas.ui.ProfileFragment"
@@ -137,17 +138,19 @@
         <action
             android:id="@+id/action_profileFragment_to_cameraPreviewFragment"
             app:destination="@id/cameraPreviewFragment" />
+    <!-- Fragmento Cámara-->
     <fragment
         android:id="@+id/cameraPreviewFragment"
         android:name="com.example.seguimientopeliculas.ui.camera.CameraPreviewFragment"
         android:label="Tomar Foto"
         tools:layout="@layout/fragment_camera_preview"/>
+    <!-- Fragmento para mostrar Mapa -->
     <fragment
         android:id="@+id/mapsFragment"
         android:name="com.example.seguimientopeliculas.ui.MapsFragment"
         android:label="fragment_maps"
         tools:layout="@layout/fragment_maps" />
-    <action
-        android:id="@+id/action_global_mapsFragment"
-        app:destination="@id/mapsFragment" />
+        <action
+            android:id="@+id/action_global_mapsFragment"
+            app:destination="@id/mapsFragment" />
 </navigation>
