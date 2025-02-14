@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.places)
     implementation(libs.transportation.consumer)
+    implementation(libs.androidx.tools.core)
     kapt (libs.compiler)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
