@@ -5,23 +5,18 @@ import android.app.AlertDialog
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
-import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsetsAnimation
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
-import androidx.privacysandbox.tools.core.model.Method
-import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.example.seguimientopeliculas.BuildConfig
 import com.example.seguimientopeliculas.R
 import com.example.seguimientopeliculas.data.remote.GooglePlacesService
-import com.example.seguimientopeliculas.data.remote.PlacesResponse
 import com.example.seguimientopeliculas.databinding.FragmentMapsBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -32,15 +27,11 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.libraries.places.api.Places
-import com.google.android.libraries.places.api.model.Place
-import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
 import dagger.hilt.android.AndroidEntryPoint
-import okhttp3.Request
-import org.json.JSONException
-import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Response
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -165,34 +156,28 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
             if (location != null) {
                 val currentLatLng = LatLng(location.latitude, location.longitude)
 
-                // Construir la URL de la API de Google Places (Nearby Search)
                 val apiKey = BuildConfig.MAPS_API_KEY
-                val url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" +
-                        "location=${currentLatLng.latitude},${currentLatLng.longitude}" +
-                        "&radius=20000" +  // 20 km en metros
-                        "&type=cinema" +  // Buscar solo cines
-                        "&key=$apiKey"
 
-                // Configurar Retrofit
                 val retrofit = Retrofit.Builder()
                     .baseUrl("https://maps.googleapis.com/maps/api/place/")
                     .addConverterFactory(GsonConverterFactory.create())
                     .build()
 
                 val service = retrofit.create(GooglePlacesService::class.java)
-                val call = service.getNearbyCinemas(
-                    "${currentLatLng.latitude},${currentLatLng.longitude}",
-                    20000, // 20km
-                    "movie_theater",
-                    "cinema",
-                    apiKey
-                )
 
-                call.enqueue(object : retrofit2.Callback<PlacesResponse> {
-                    override fun onResponse(
-                        call: Call<PlacesResponse>,
-                        response: Response<PlacesResponse>
-                    ) {
+                // Usar coroutines para la llamada a la API
+                lifecycleScope.launch {
+                    try {
+                        val response = withContext(Dispatchers.IO) {
+                            service.getNearbyCinemas(
+                                "${currentLatLng.latitude},${currentLatLng.longitude}",
+                                20000,
+                                "movie_theater",
+                                "cinema|movie theater",
+                                apiKey
+                            )
+                        }
+
                         if (response.isSuccessful) {
                             val placesResponse = response.body()
                             val results = placesResponse?.results ?: emptyList()
@@ -203,7 +188,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
                                     "No se encontraron cines cercanos",
                                     Toast.LENGTH_SHORT
                                 ).show()
-                                return
+                                return@launch
                             }
 
                             val cinemaList = results.map { "${it.name} - ${it.vicinity}" }
@@ -231,10 +216,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
                             results.firstOrNull()?.geometry?.location?.let {
                                 googleMap.animateCamera(
                                     CameraUpdateFactory.newLatLngZoom(
-                                        LatLng(
-                                            it.lat,
-                                            it.lng
-                                        ), 12f
+                                        LatLng(it.lat, it.lng), 12f
                                     )
                                 )
                             }
@@ -245,16 +227,14 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
-                    }
-
-                    override fun onFailure(call: Call<PlacesResponse>, t: Throwable) {
+                    } catch (e: Exception) {
                         Toast.makeText(
                             requireContext(),
-                            "Error en la solicitud: ${t.message}",
+                            "Error en la solicitud: ${e.message}",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
-                })
+                }
             } else {
                 Toast.makeText(
                     requireContext(),
