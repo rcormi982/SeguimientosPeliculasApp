@@ -132,6 +132,14 @@ class LoginFragment : Fragment() {
                         apply()
                     }
 
+                    // Guardar datos del usuario para uso offline
+                    try {
+                        val userData = userRemoteDataSource.getUserData()
+                        databaseHelper.saveUserDataForOffline(userData)
+                    } catch (e: Exception) {
+                        Log.e("LoginFragment", "Error guardando datos del usuario: ${e.message}")
+                    }
+
                     // Cargar películas para uso offline
                     try {
                         val response = movieRemoteDataSource.getUserMovies(moviesUserId)

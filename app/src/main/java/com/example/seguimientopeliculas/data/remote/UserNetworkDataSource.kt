@@ -10,6 +10,7 @@ import com.example.seguimientopeliculas.data.MoviesUser
 import com.example.seguimientopeliculas.data.UpdateMoviesUserPayload
 import com.example.seguimientopeliculas.data.PhotoUploadResult
 import com.example.seguimientopeliculas.data.UpdateData
+import com.example.seguimientopeliculas.data.local.database.DatabaseHelper
 import com.example.seguimientopeliculas.login.RegisterResponse
 import com.example.seguimientopeliculas.login.UserResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -25,7 +26,8 @@ import javax.inject.Singleton
 class UserNetworkDataSource @Inject constructor(
     private val strapiApi: StrapiApi,
     private val sharedPreferences: SharedPreferences,
-    private val context: Context
+    private val context: Context,
+    private val databaseHelper: DatabaseHelper
 ) : UserRemoteDataSource {
 
     override suspend fun registerUser(
@@ -86,40 +88,79 @@ class UserNetworkDataSource @Inject constructor(
     }
 
     override suspend fun getUserData(): UserResponse {
-        val jwt = getJwtToken()
-        if (jwt.isEmpty()) throw Exception("Token JWT no encontrado")
+        try {
+            val jwt = getJwtToken()
+            if (jwt.isEmpty()) throw Exception("Token JWT no encontrado")
 
-        val response = strapiApi.getUserData("Bearer $jwt")
-        if (response.isSuccessful) {
-            return response.body()
-                ?: throw Exception("No se pudo obtener la información del usuario")
-        } else {
-            throw Exception("Error al obtener datos del usuario: ${response.message()}")
+            val response = strapiApi.getUserData("Bearer $jwt")
+            if (response.isSuccessful) {
+                val userData = response.body()
+                    ?: throw Exception("No se pudo obtener la información del usuario")
+
+                // Guardar datos para uso offline
+                databaseHelper.saveUserDataForOffline(userData)
+
+                return userData
+            } else {
+                throw Exception("Error al obtener datos del usuario: ${response.message()}")
+            }
+        } catch (e: Exception) {
+            Log.e("UserNetworkDataSource", "Error obteniendo datos remotos del usuario: ${e.message}")
+
+            // Intentar obtener datos del usuario desde almacenamiento local
+            val offlineUserData = databaseHelper.getOfflineUserData()
+            if (offlineUserData != null) {
+                Log.d("UserNetworkDataSource", "Usando datos de usuario almacenados localmente")
+                return offlineUserData
+            }
+
+            throw Exception("No se pudo obtener la información del usuario: ${e.message}")
         }
     }
 
     override suspend fun getMoviesUserData(): MoviesUser {
-        val user = getUserData()
-        val response = strapiApi.getMoviesUserByUserId(user.id)
-        if (!response.isSuccessful || response.body()?.data.isNullOrEmpty()) {
-            throw Exception("Error al obtener datos del MoviesUser")
+        try {
+            // Intentar obtener datos remotos
+            val user = getUserData()
+            val response = strapiApi.getMoviesUserByUserId(user.id)
+
+            if (response.isSuccessful && !response.body()?.data.isNullOrEmpty()) {
+                val moviesUserData = response.body()?.data?.firstOrNull()
+                    ?: throw Exception("No se encontraron datos del MoviesUser")
+
+                // Extraer la URL de la imagen
+                val imageUrl = moviesUserData.attributes.imageUrl?.data?.attributes?.url
+
+                // Crear objeto MoviesUser
+                val moviesUser = MoviesUser(
+                    id = moviesUserData.id,
+                    username = moviesUserData.attributes.username,
+                    email = moviesUserData.attributes.email,
+                    password = "",
+                    userId = user.id,
+                    imageUrl = imageUrl,
+                    image = null
+                )
+
+                // Guardar para uso offline
+                databaseHelper.saveMoviesUserForOffline(moviesUser)
+
+                return moviesUser
+            } else {
+                throw Exception("Error al obtener datos del MoviesUser")
+            }
+        } catch (e: Exception) {
+            Log.e("UserNetworkDataSource", "Error obteniendo datos remotos de MoviesUser: ${e.message}")
+
+            // Intentar obtener datos desde almacenamiento local
+            val offlineMoviesUser = databaseHelper.getOfflineMoviesUserData()
+            if (offlineMoviesUser != null) {
+                Log.d("UserNetworkDataSource", "Usando datos de MoviesUser almacenados localmente")
+                return offlineMoviesUser
+            }
+
+            throw Exception("No se pudo obtener datos del MoviesUser: ${e.message}")
         }
-
-        val moviesUserData = response.body()?.data?.firstOrNull()
-            ?: throw Exception("No se encontraron datos del MoviesUser")
-
-        // Extraer la URL de la imagen correctamente siguiendo la estructura anidada
-        val imageUrl = moviesUserData.attributes.imageUrl?.data?.attributes?.url
-
-        return MoviesUser(
-            id = moviesUserData.id,
-            username = moviesUserData.attributes.username,
-            email = moviesUserData.attributes.email,
-            password = "",
-            userId = user.id,
-            imageUrl = imageUrl,
-            image = null
-        )
     }
 
     override suspend fun uploadProfilePhoto(photoUri: Uri, moviesUserId: Int): PhotoUploadResult? {
@@ -290,23 +331,41 @@ class UserNetworkDataSource @Inject constructor(
     }
 
     override suspend fun getMoviesForUser(userId: Int): List<Movie> {
-        val response = strapiApi.getMoviesByUser(
-            moviesUserId = userId,
-            populate = "movies_users,users_permissions_user"
-        )
+        try {
+            // Intentar obtener datos remotos
+            val response = strapiApi.getMoviesByUser(
+                moviesUserId = userId,
+                populate = "movies_users,users_permissions_user"
+            )
 
-        if (response.isSuccessful) {
-            val movieListRaw: MovieListRaw? = response.body()
-            if (movieListRaw == null || movieListRaw.data.isNullOrEmpty()) {
-                return emptyList()
+            if (response.isSuccessful) {
+                val movieListRaw: MovieListRaw? = response.body()
+                if (movieListRaw == null || movieListRaw.data.isNullOrEmpty()) {
+                    return emptyList()
+                }
+
+                val movies = movieListRaw.data.mapNotNull { movieRaw ->
+                    movieRaw.toMovie()
+                }
+
+                // Guardar para uso offline
+                databaseHelper.saveMoviesForOffline(movies, userId)
+
+                return movies
+            } else {
+                throw Exception("Error al obtener películas del usuario: ${response.message()}")
+            }
+        } catch (e: Exception) {
+            Log.e("UserNetworkDataSource", "Error obteniendo películas remotas: ${e.message}")
+
+            // Intentar obtener datos locales
+            val offlineMovies = databaseHelper.getOfflineMoviesForUser(userId)
+            if (offlineMovies.isNotEmpty()) {
+                Log.d("UserNetworkDataSource", "Usando películas almacenadas localmente")
+                return offlineMovies
             }
 
-            return movieListRaw.data.mapNotNull { movieRaw ->
-                movieRaw.toMovie()
-            }
-        } else {
-            val errorBody = response.errorBody()?.string()
-            throw Exception("Error al obtener películas del usuario: $errorBody")
+            throw Exception("Error al obtener películas del usuario: ${e.message}")
         }
     }
 
