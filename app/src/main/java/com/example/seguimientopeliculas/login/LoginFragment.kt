@@ -132,49 +132,47 @@ class LoginFragment : Fragment() {
                         apply()
                     }
 
-                    // Guardar datos del usuario para uso offline
+                    // Obtener datos del usuario
                     try {
                         val userData = userRemoteDataSource.getUserData()
-                        databaseHelper.saveUserDataForOffline(userData)
-                    } catch (e: Exception) {
-                        Log.e("LoginFragment", "Error guardando datos del usuario: ${e.message}")
-                    }
 
-                    // Cargar películas para uso offline
-                    try {
-                        val response = movieRemoteDataSource.getUserMovies(moviesUserId)
-                        if (response.isSuccessful) {
-                            val movieList = response.body()
-                            val movies = movieList?.data?.map { movieRaw ->
+                        // Cargar películas del usuario
+                        val movieResponse = movieRemoteDataSource.getUserMovies(moviesUserId)
+                        if (movieResponse.isSuccessful) {
+                            val movies = movieResponse.body()?.data?.map {
                                 Movie(
-                                    id = movieRaw.id,
-                                    title = movieRaw.attributes?.Title ?: "",
-                                    genre = movieRaw.attributes?.Genre ?: "",
-                                    rating = movieRaw.attributes?.Rating ?: 0,
-                                    status = movieRaw.attributes?.Status ?: "",
-                                    premiere = movieRaw.attributes?.Premiere ?: false,
-                                    comments = movieRaw.attributes?.Comments ?: "",
+                                    id = it.id,
+                                    title = it.attributes?.Title ?: "",
+                                    genre = it.attributes?.Genre ?: "",
+                                    rating = it.attributes?.Rating ?: 0,
+                                    status = it.attributes?.Status ?: "",
+                                    premiere = it.attributes?.Premiere ?: false,
+                                    comments = it.attributes?.Comments ?: "",
                                     moviesUserId = moviesUserId
                                 )
                             } ?: emptyList()
 
-                            // Usar el helper para guardar películas
-                            databaseHelper.saveMoviesForOffline(movies, moviesUserId)
+                            // Usar el nuevo método para inicializar la base de datos
+                            databaseHelper.initializeDatabaseWithUserAndMovies(
+                                userId = userId,
+                                username = userData.username,
+                                email = userData.email,
+                                movies = movies
+                            )
                         }
                     } catch (e: Exception) {
-                        Log.e("LoginFragment", "Error guardando películas offline: ${e.message}")
+                        Log.e("LoginFragment", "Error inicializando datos locales: ${e.message}")
                     }
 
-                    Toast.makeText(requireContext(), "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
                     findNavController().navigate(R.id.action_loginFragment_to_showMoviesFragment)
                 } else {
-                    Log.e("LoginFragment", "Error: MoviesUserId no encontrado")
-                    Toast.makeText(requireContext(), "Error al obtener información del usuario", Toast.LENGTH_SHORT).show()
+                    Log.e("LoginFragment", "MoviesUserId no encontrado")
+                    Toast.makeText(requireContext(), "Error al obtener información del usuario", Toast.LENGTH_LONG).show()
                     enableLoginButton()
                 }
             } catch (e: Exception) {
                 Log.e("LoginFragment", "Error en saveUserSession: ${e.message}")
-                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_LONG).show()
                 enableLoginButton()
             }
         }

@@ -2,6 +2,7 @@ package com.example.seguimientopeliculas.data.local.database
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.example.seguimientopeliculas.data.local.entities.MoviesUserEntity
@@ -12,6 +13,6 @@ interface MoviesUserDao {
     @Query("SELECT * FROM movies_user WHERE id = :userId")
     suspend fun getMoviesUserById(userId: Int): MoviesUserEntity
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMoviesUser(user: MoviesUserEntity)
 }
