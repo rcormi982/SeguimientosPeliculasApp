@@ -11,6 +11,16 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.seguimientopeliculas.R
+import com.example.seguimientopeliculas.data.DefaultMovieRepository
+import com.example.seguimientopeliculas.data.Movie
+import com.example.seguimientopeliculas.data.local.database.AppDatabase
+import com.example.seguimientopeliculas.data.local.database.DatabaseHelper
+import com.example.seguimientopeliculas.data.local.entities.MovieEntity
+import com.example.seguimientopeliculas.data.local.entities.MoviesUserEntity
+import com.example.seguimientopeliculas.data.local.entities.MoviesUserFilmEntity
+import com.example.seguimientopeliculas.data.local.entities.UserEntity
+import com.example.seguimientopeliculas.data.local.iLocalDataSource.IMoviesUserFilmLocalDataSource
+import com.example.seguimientopeliculas.data.remote.MovieRemoteDataSource
 import com.example.seguimientopeliculas.data.remote.StrapiApi
 import com.example.seguimientopeliculas.data.remote.UserRemoteDataSource
 import com.example.seguimientopeliculas.databinding.FragmentLoginBinding
@@ -27,6 +37,17 @@ class LoginFragment : Fragment() {
     lateinit var strapiApi: StrapiApi
     @Inject
     lateinit var userRemoteDataSource: UserRemoteDataSource
+    @Inject
+    lateinit var appDatabase: AppDatabase
+
+    @Inject
+    lateinit var movieRemoteDataSource: MovieRemoteDataSource
+
+    @Inject
+    lateinit var moviesUserFilmLocalDataSource: IMoviesUserFilmLocalDataSource
+
+    @Inject
+    lateinit var databaseHelper: DatabaseHelper
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -101,6 +122,7 @@ class LoginFragment : Fragment() {
             try {
                 val moviesUserId = userRemoteDataSource.fetchMoviesUserId(userId)
                 if (moviesUserId != null) {
+                    // Guardar en SharedPreferences
                     val sharedPreferences = requireContext().getSharedPreferences("app_preferences", Context.MODE_PRIVATE)
                     with(sharedPreferences.edit()) {
                         putString("jwt_token", jwt)
@@ -109,12 +131,43 @@ class LoginFragment : Fragment() {
                         putBoolean("isLoggedIn", true)
                         apply()
                     }
-                    Log.d("LoginFragment", "Sesión guardada: JWT y MoviesUserId guardados correctamente")
+
+                    // Cargar películas para uso offline
+                    try {
+                        val response = movieRemoteDataSource.getUserMovies(moviesUserId)
+                        if (response.isSuccessful) {
+                            val movieList = response.body()
+                            val movies = movieList?.data?.map { movieRaw ->
+                                Movie(
+                                    id = movieRaw.id,
+                                    title = movieRaw.attributes?.Title ?: "",
+                                    genre = movieRaw.attributes?.Genre ?: "",
+                                    rating = movieRaw.attributes?.Rating ?: 0,
+                                    status = movieRaw.attributes?.Status ?: "",
+                                    premiere = movieRaw.attributes?.Premiere ?: false,
+                                    comments = movieRaw.attributes?.Comments ?: "",
+                                    moviesUserId = moviesUserId
+                                )
+                            } ?: emptyList()
+
+                            // Usar el helper para guardar películas
+                            databaseHelper.saveMoviesForOffline(movies, moviesUserId)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("LoginFragment", "Error guardando películas offline: ${e.message}")
+                    }
+
+                    Toast.makeText(requireContext(), "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
+                    findNavController().navigate(R.id.action_loginFragment_to_showMoviesFragment)
                 } else {
-                    Log.e("LoginFragment", "MoviesUserId no encontrado para el usuario con ID: $userId")
+                    Log.e("LoginFragment", "Error: MoviesUserId no encontrado")
+                    Toast.makeText(requireContext(), "Error al obtener información del usuario", Toast.LENGTH_SHORT).show()
+                    enableLoginButton()
                 }
             } catch (e: Exception) {
-                Log.e("LoginFragment", "Error al guardar la sesión del usuario: ${e.message}")
+                Log.e("LoginFragment", "Error en saveUserSession: ${e.message}")
+                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                enableLoginButton()
             }
         }
     }

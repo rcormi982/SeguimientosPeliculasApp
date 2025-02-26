@@ -1,12 +1,18 @@
 package com.example.seguimientopeliculas.ui
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.seguimientopeliculas.data.Movie
 import com.example.seguimientopeliculas.data.MovieRepository
+import com.example.seguimientopeliculas.data.local.iLocalDataSource.IMoviesUserFilmLocalDataSource
+import com.example.seguimientopeliculas.util.NetworkUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +22,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MovieListViewModel @Inject constructor(
-    private val movieRepository: MovieRepository
+    private val movieRepository: MovieRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MovieListUiState>(MovieListUiState.Loading)
@@ -30,21 +37,38 @@ class MovieListViewModel @Inject constructor(
                 val userId = sharedPreferences.getInt("moviesUserId", -1)
                 if (userId == -1) throw Exception("Usuario no logueado. No se encontró userId.")
 
+                val isNetworkAvailable = isNetworkAvailable(context)
                 val movies = movieRepository.getUserMovies(userId)
-                _uiState.value = if (movies.isEmpty()) {
-                    Log.e(
-                        "MovieListViewModel",
-                        "No se encontraron películas para el usuario $userId."
-                    )
-                    MovieListUiState.Error("No se encontraron películas para este usuario.")
+
+                if (movies.isEmpty()) {
+                    if (!isNetworkAvailable) {
+                        _uiState.value = MovieListUiState.Error("Sin conexión a Internet. No hay películas guardadas localmente.")
+                    } else {
+                        _uiState.value = MovieListUiState.Error("No se encontraron películas para este usuario.")
+                    }
                 } else {
-                    Log.d("MovieListViewModel", "Películas encontradas: ${movies.size}")
-                    MovieListUiState.Success(movies)
+                    _uiState.value = MovieListUiState.Success(movies)
                 }
             } catch (e: Exception) {
-                Log.e("MovieListViewModel", "Error al cargar películas: ${e.message}", e)
-                _uiState.value = MovieListUiState.Error("Error al cargar películas del usuario.")
+                _uiState.value = MovieListUiState.Error("Error al cargar películas: ${e.message}")
             }
+        }
+    }
+
+    private fun isNetworkAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val network = connectivityManager.activeNetwork ?: return false
+            val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
+            return when {
+                activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+                activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+                activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+                else -> false
+            }
+        } else {
+            val networkInfo = connectivityManager.activeNetworkInfo
+            return networkInfo != null && networkInfo.isConnected
         }
     }
 }

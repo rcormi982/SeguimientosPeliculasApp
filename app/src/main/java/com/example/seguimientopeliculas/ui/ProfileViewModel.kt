@@ -43,7 +43,6 @@ class ProfileViewModel @Inject constructor(
                 false
             }
         } catch (e: Exception) {
-            Log.e("ProfileViewModel", "Error al subir la foto: ${e.message}")
             false
         }
     }

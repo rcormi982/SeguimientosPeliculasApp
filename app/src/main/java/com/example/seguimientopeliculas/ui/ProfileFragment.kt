@@ -273,9 +273,9 @@ class ProfileFragment : Fragment() {
 
             // Crear el archivo temporal para la foto
             val photoFile = File.createTempFile(
-                "profile_photo_",  // prefijo
-                ".jpg",           // sufijo
-                storageDir        // directorio
+                "profile_photo_",
+                ".jpg",
+                storageDir
             ).apply {
                 // Asegurarse de que el archivo es borrado cuando la app se cierra
                 deleteOnExit()
@@ -288,17 +288,12 @@ class ProfileFragment : Fragment() {
                 photoFile
             )
 
-            // Log para debugging
-            Log.d("ProfileFragment", "Photo file created at: ${photoFile.absolutePath}")
-            Log.d("ProfileFragment", "URI created: $currentPhotoPath")
-
             // Lanzar la cámara
             currentPhotoPath?.let { uri ->
                 takePhotoResult.launch(uri)
             }
 
         } catch (e: Exception) {
-            Log.e("ProfileFragment", "Error creating photo file: ${e.message}", e)
             Toast.makeText(
                 requireContext(),
                 "Error al crear el archivo de la foto: ${e.message}",
@@ -344,7 +339,6 @@ class ProfileFragment : Fragment() {
                 binding.emailInput.setText(moviesUser.email)
 
                 moviesUser.imageUrl?.let { url ->
-                    Log.d("ProfileFragment", "URL de foto de perfil: $url")
                     binding.profileImage.load(url) {
                         crossfade(true)
                         transformations(CircleCropTransformation())
@@ -400,12 +394,11 @@ class ProfileFragment : Fragment() {
             // Manejar la foto de perfil
             val photoUri = viewModel.photo.value
             if (photoUri != Uri.EMPTY) {
-                Log.d("ProfileFragment", "Intentando subir nueva foto: $photoUri")
                 val uploadResult = userRemoteDataSource.uploadProfilePhoto(photoUri, moviesUserId)
                 if (uploadResult != null) {
                     Log.d("ProfileFragment", "Foto subida exitosamente. URL: ${uploadResult.url}")
 
-                    // Intentar actualizar la foto del usuario
+                    // Actualizar la foto del usuario
                     val photoUpdateSuccess = userRemoteDataSource.updateUserPhoto(moviesUserId, uploadResult)
                     if (!photoUpdateSuccess) {
                         Log.e("ProfileFragment", "Error al actualizar la foto en el usuario")
@@ -420,7 +413,6 @@ class ProfileFragment : Fragment() {
             // Actualizar MoviesUser
             val moviesUserUpdateSuccess = userRemoteDataSource.updateMoviesUser(moviesUserId, moviesUserUpdatePayload)
             if (!moviesUserUpdateSuccess) {
-                Log.e("ProfileFragment", "Error al actualizar MoviesUser")
                 return false
             }
 
@@ -439,7 +431,6 @@ class ProfileFragment : Fragment() {
 
             return true
         } catch (e: Exception) {
-            Log.e("ProfileFragment", "Error en actualización", e)
             return false
         }
     }
@@ -450,7 +441,6 @@ class ProfileFragment : Fragment() {
 
         val deleteMoviesUserSuccess = deleteMoviesUser()
         if (!deleteMoviesUserSuccess) {
-            Log.e("ProfileFragment", "Error al eliminar MoviesUser asociado.")
             return false
         }
 
@@ -472,7 +462,6 @@ class ProfileFragment : Fragment() {
         val sharedPreferences =
             requireContext().getSharedPreferences("app_preferences", Context.MODE_PRIVATE)
         val userId = sharedPreferences.getInt("userId", -1)
-        Log.d("ProfileFragment", "User ID obtenido desde SharedPreferences: $userId")
         return userId
     }
 

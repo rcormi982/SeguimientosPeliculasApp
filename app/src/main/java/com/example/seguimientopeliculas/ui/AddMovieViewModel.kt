@@ -1,5 +1,9 @@
 package com.example.seguimientopeliculas.ui
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,6 +12,7 @@ import com.example.seguimientopeliculas.data.MovieRepository
 import com.example.seguimientopeliculas.data.remote.MovieAttributes
 import com.example.seguimientopeliculas.data.remote.MoviePostRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +22,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddMovieViewModel @Inject constructor(
-    private val movieRepository: MovieRepository
+    private val movieRepository: MovieRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _genres = MutableStateFlow<List<String>>(emptyList())
@@ -42,7 +48,6 @@ class AddMovieViewModel @Inject constructor(
                 _statuses.value = statuses
             } catch (e: Exception) {
                 _uiState.value = AddMovieUiState.Error("Error al cargar géneros y estados: ${e.message}")
-                Log.e("AddMovieViewModel", "Error al cargar géneros y estados", e)
             }
         }
     }
@@ -51,6 +56,12 @@ class AddMovieViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _uiState.value = AddMovieUiState.Loading
+
+                // Verificar conexión
+                if (!isNetworkAvailable()) {
+                    _uiState.value = AddMovieUiState.Error("No hay conexión a Internet. No se pueden crear películas sin conexión.")
+                    return@launch
+                }
 
                 // Construir los atributos de la película
                 val movieAttributes = MovieAttributes(
@@ -75,6 +86,25 @@ class AddMovieViewModel @Inject constructor(
                 // Manejo de errores generales
                 _uiState.value = AddMovieUiState.Error("Error al guardar película: ${e.message}")
             }
+        }
+    }
+
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val network = connectivityManager.activeNetwork ?: return false
+            val activeNetwork = connectivityManager.getNetworkCapabilities(network) ?: return false
+            return when {
+                activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+                activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+                activeNetwork.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+                else -> false
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            val networkInfo = connectivityManager.activeNetworkInfo
+            @Suppress("DEPRECATION")
+            return networkInfo != null && networkInfo.isConnected
         }
     }
 }

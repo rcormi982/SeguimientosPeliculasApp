@@ -50,22 +50,18 @@ class MainActivity : AppCompatActivity() {
         bottomNavigationView.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.nav_show_movies -> {
-                    Log.d("MainActivity", "Navegando a ShowMoviesFragment")
                     navController.navigate(R.id.movieListFragment)
                     true
                 }
                 R.id.nav_edit -> {
-                    Log.d("MainActivity", "Navegando a MovieListEditFragment")
                     navController.navigate(R.id.movieListEditFragment)
                     true
                 }
                 R.id.nav_profile -> {
-                    Log.d("MainActivity", "Navegando a ProfileFragment (comportamiento no implementado)")
                     navController.navigate(R.id.profileFragment)
                     true
                 }
                 R.id.nav_map -> {
-                    Log.d("MainActivity", "Navegando a MapsFragment")
                     navController.navigate(R.id.mapsFragment)
                     true
                 }
@@ -79,11 +75,9 @@ class MainActivity : AppCompatActivity() {
                 val currentDestination = navController.currentDestination?.id
                 when (currentDestination) {
                     R.id.showMoviesFragment -> {
-                        Log.d("MainActivity", "Navegando de ShowMoviesFragment a AddMoviesFragment")
                         navController.navigate(R.id.action_showMoviesFragment_to_addMoviesFragment)
                     }
                     R.id.movieListFragment -> {
-                        Log.d("MainActivity", "Navegando de MovieListFragment a AddMoviesFragment")
                         navController.navigate(R.id.action_movieListFragment_to_addMoviesFragment)
                     }
                     else -> {

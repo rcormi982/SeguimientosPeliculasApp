@@ -8,6 +8,9 @@ import com.example.seguimientopeliculas.data.local.entities.MovieEntity
 
 @Dao
 interface MovieDao {
+    @Query("SELECT * FROM film WHERE id = :movieId")
+    fun getMovieById(movieId: Int): MovieEntity?
+
     @Query("SELECT * FROM film")
     fun getAllFilms(): List<MovieEntity>
 

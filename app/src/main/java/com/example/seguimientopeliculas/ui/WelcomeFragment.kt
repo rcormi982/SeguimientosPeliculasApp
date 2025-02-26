@@ -33,7 +33,7 @@ class WelcomeFragment : Fragment() {
         val gifImageView = view.findViewById<ImageView>(R.id.clapperboardImage)
         Glide.with(this)
             .asGif()
-            .load(R.drawable.claqueta6) // Cambia por el nombre de tu archivo GIF
+            .load(R.drawable.claqueta6)
             .into(gifImageView)
 
         lifecycleScope.launch {

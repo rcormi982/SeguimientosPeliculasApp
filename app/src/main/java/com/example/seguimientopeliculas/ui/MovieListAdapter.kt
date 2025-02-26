@@ -43,7 +43,6 @@ class MovieListAdapter @Inject constructor(
 
             // Configuramos el evento de clic en el elemento del adaptador
             binding.root.setOnClickListener {
-                Log.d("MovieListAdapter", "Clic registrado en la película: ${movie.title}")
                 onMovieClick?.invoke(movie)
             }
         }

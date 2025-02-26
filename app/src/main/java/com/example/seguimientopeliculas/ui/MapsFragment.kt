@@ -189,7 +189,6 @@ class MapsFragment : Fragment(), OnMapReadyCallback {
 
                 val service = retrofit.create(GooglePlacesService::class.java)
 
-                // Usar coroutines para la llamada a la API
                 lifecycleScope.launch {
                     try {
                         val response = withContext(Dispatchers.IO) {

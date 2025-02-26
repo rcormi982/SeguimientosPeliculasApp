@@ -124,9 +124,8 @@ class CameraPreviewFragment : Fragment() {
         }
     }
 
-    /**
-     * Función para almacenar la foto tomada en disco
-     */
+    //Función para almacenar la foto tomada en disco
+
     private fun captureImageToDisk() {
         val name = SimpleDateFormat(FILENAME_FORMAT, Locale.getDefault())
             .format(System.currentTimeMillis())

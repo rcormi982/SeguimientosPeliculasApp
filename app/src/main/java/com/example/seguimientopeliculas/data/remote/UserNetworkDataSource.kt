@@ -8,11 +8,8 @@ import android.provider.OpenableColumns
 import com.example.seguimientopeliculas.data.Movie
 import com.example.seguimientopeliculas.data.MoviesUser
 import com.example.seguimientopeliculas.data.UpdateMoviesUserPayload
-import com.example.seguimientopeliculas.data.ImageAttributes
-import com.example.seguimientopeliculas.data.ImageUrlData
 import com.example.seguimientopeliculas.data.PhotoUploadResult
 import com.example.seguimientopeliculas.data.UpdateData
-import com.example.seguimientopeliculas.data.UpdateImageUrl
 import com.example.seguimientopeliculas.login.RegisterResponse
 import com.example.seguimientopeliculas.login.UserResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -71,7 +68,6 @@ class UserNetworkDataSource @Inject constructor(
             }
         } else {
             val errorBody = registerResponse.errorBody()?.string()
-            Log.e("RegisterUser", "Error al registrar usuario: $errorBody")
         }
 
         return registerResponse
@@ -85,7 +81,6 @@ class UserNetworkDataSource @Inject constructor(
             moviesUserLoginData?.id
         } else {
             val errorBody = response.errorBody()?.string()
-            Log.e("UserNetworkDataSource", "Error al obtener MoviesUserId: $errorBody")
             null
         }
     }
@@ -115,9 +110,6 @@ class UserNetworkDataSource @Inject constructor(
 
         // Extraer la URL de la imagen correctamente siguiendo la estructura anidada
         val imageUrl = moviesUserData.attributes.imageUrl?.data?.attributes?.url
-
-        // Agregar registro de depuración para verificar la URL
-        Log.d("UserNetworkDataSource", "URL de foto de perfil: $imageUrl")
 
         return MoviesUser(
             id = moviesUserData.id,
@@ -184,7 +176,6 @@ class UserNetworkDataSource @Inject constructor(
 
             return if (response.isSuccessful) {
                 val uploadResponse = response.body()?.firstOrNull()
-                Log.d("UserNetworkDataSource", "Subida exitosa. Respuesta: $uploadResponse")
                 uploadResponse?.let {
                     PhotoUploadResult(
                         url = it.url,
@@ -193,12 +184,10 @@ class UserNetworkDataSource @Inject constructor(
                 }
             } else {
                 val errorBody = response.errorBody()?.string()
-                Log.e("UserNetworkDataSource", "Error en la subida de foto: $errorBody")
                 null
             }
 
         } catch (e: Exception) {
-            Log.e("UserNetworkDataSource", "Excepción en la subida de foto", e)
             return null
         } finally {
             // 7. Limpiar archivos temporales
@@ -217,9 +206,6 @@ class UserNetworkDataSource @Inject constructor(
     override suspend fun updateUserPhoto(moviesUserId: Int, photoResult: PhotoUploadResult): Boolean {
         try {
             val token = getJwtToken()
-            Log.d("UserNetworkDataSource", "Token para actualización de foto: $token")
-            Log.d("UserNetworkDataSource", "URL de foto a actualizar: ${photoResult.url}")
-            Log.d("UserNetworkDataSource", "MoviesUserId: $moviesUserId")
 
             if (token.isEmpty()) {
                 throw Exception("Token JWT no encontrado")
@@ -236,20 +222,17 @@ class UserNetworkDataSource @Inject constructor(
 
             if (!response.isSuccessful) {
                 val errorBody = response.errorBody()?.string()
-                Log.e("UserNetworkDataSource", "Error al actualizar foto: $errorBody")
                 return false
             }
 
             return true
         } catch (e: Exception) {
-            Log.e("UserNetworkDataSource", "Error en actualización: ${e.message}")
             return false
         }
     }
 
     fun getJwtToken(): String {
         val token = sharedPreferences.getString("jwt_token", "").orEmpty()
-        Log.d("MovieNetworkDataSource", "Token recuperado: $token")
         return token
     }
 
@@ -294,7 +277,6 @@ class UserNetworkDataSource @Inject constructor(
 
             return true
         } catch (e: Exception) {
-            // Elimina el log de error
             return true
         }
     }
@@ -316,7 +298,6 @@ class UserNetworkDataSource @Inject constructor(
         if (response.isSuccessful) {
             val movieListRaw: MovieListRaw? = response.body()
             if (movieListRaw == null || movieListRaw.data.isNullOrEmpty()) {
-                Log.e("UserNetworkDataSource", "No se encontraron películas en la respuesta.")
                 return emptyList()
             }
 
@@ -325,7 +306,6 @@ class UserNetworkDataSource @Inject constructor(
             }
         } else {
             val errorBody = response.errorBody()?.string()
-            Log.e("UserNetworkDataSource", "Error en la respuesta: $errorBody")
             throw Exception("Error al obtener películas del usuario: $errorBody")
         }
     }
