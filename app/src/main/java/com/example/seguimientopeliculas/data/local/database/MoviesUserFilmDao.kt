@@ -38,4 +38,13 @@ interface MoviesUserFilmDao {
     @Query("SELECT COUNT(*) FROM movies_user_film WHERE movies_user_id = :userId")
     suspend fun countRelationsForUser(userId: Int): Int
 
+    @Query("SELECT * FROM movies_user_film WHERE movies_user_id = :userId AND film_id = :filmId")
+    suspend fun getRelationForUserAndFilm(userId: Int, filmId: Int): MoviesUserFilmEntity?
+
+    @Query("DELETE FROM movies_user_film WHERE movies_user_id = :userId")
+    suspend fun deleteAllRelationsForUser(userId: Int)
+
+    @Query("DELETE FROM movies_user_film")
+    suspend fun deleteAllRelations()
+
 }

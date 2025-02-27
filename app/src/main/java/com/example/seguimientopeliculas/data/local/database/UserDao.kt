@@ -24,4 +24,7 @@ interface UserDao {
     // Añadir este método para contar los usuarios
     @Query("SELECT COUNT(*) FROM user")
     suspend fun getUserCount(): Int
+
+    @Query("DELETE FROM user")
+    suspend fun deleteAllUsers()
 }

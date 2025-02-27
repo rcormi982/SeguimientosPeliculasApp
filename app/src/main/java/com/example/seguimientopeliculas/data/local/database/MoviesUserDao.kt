@@ -16,5 +16,8 @@ interface MoviesUserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMoviesUser(user: MoviesUserEntity)
 
+    @Query("DELETE FROM movies_user")
+    suspend fun deleteAllMoviesUsers()
+
 
 }

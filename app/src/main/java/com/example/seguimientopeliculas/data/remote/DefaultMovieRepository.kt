@@ -90,17 +90,19 @@ class DefaultMovieRepository @Inject constructor(
                         )
                     } ?: emptyList()
 
-                    // Guardar para uso offline
-                    databaseHelper.saveMoviesForOffline(remoteMovies, userId)
+                    Log.d("Repository", "Películas remotas recibidas: ${remoteMovies.size}")
+
+                    // Usar la nueva función de reset y sincronización
+                    databaseHelper.resetAndSyncMovies(userId, remoteMovies)
 
                     _moviesStateFlow.emit(remoteMovies)
                     return remoteMovies
                 }
             }
 
+            // Cargar datos offline
             Log.d("Repository", "Sin conexión o respuesta fallida. Cargando películas locales")
 
-            // Cargar datos offline
             val offlineMovies = databaseHelper.getOfflineMoviesForUser(userId)
 
             Log.d("Repository", "Películas locales cargadas: ${offlineMovies.size}")

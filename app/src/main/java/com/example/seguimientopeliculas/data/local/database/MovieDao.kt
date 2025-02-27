@@ -2,6 +2,7 @@ package com.example.seguimientopeliculas.data.local.database
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.seguimientopeliculas.data.local.entities.MovieEntity
@@ -14,7 +15,7 @@ interface MovieDao {
     @Query("SELECT * FROM film")
     fun getAllFilms(): List<MovieEntity>
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertFilm(film: MovieEntity)
 
     @Update
@@ -22,4 +23,11 @@ interface MovieDao {
 
     @Query("DELETE FROM film WHERE id = :filmId")
     fun deleteFilmById(filmId: Int)
+
+    @Query("DELETE FROM film WHERE id NOT IN (:keepIds)")
+    fun deleteMoviesExcept(keepIds: List<Int>)
+
+    @Query("DELETE FROM film")
+    suspend fun deleteAllMovies()
+
 }
