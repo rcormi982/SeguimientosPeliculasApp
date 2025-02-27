@@ -68,9 +68,14 @@ class DefaultMovieRepository @Inject constructor(
             val networkInfo = connectivityManager.activeNetworkInfo
             val isConnected = networkInfo != null && networkInfo.isConnected
 
+            Log.d("Repository", "Conexión a internet: $isConnected")
+
             if (isConnected) {
                 // Intentar obtener datos remotos primero
                 val response = movieRemoteDataSource.getUserMovies(userId)
+
+                Log.d("Repository", "Respuesta del servidor: ${response.isSuccessful}")
+
                 if (response.isSuccessful) {
                     val remoteMovies = response.body()?.data?.map {
                         Movie(
@@ -93,28 +98,40 @@ class DefaultMovieRepository @Inject constructor(
                 }
             }
 
-            Log.e("Repository", "Error obteniendo películas remotas: No hay conexión o respuesta fallida")
+            Log.d("Repository", "Sin conexión o respuesta fallida. Cargando películas locales")
+
+            // Cargar datos offline
+            val offlineMovies = databaseHelper.getOfflineMoviesForUser(userId)
+
+            Log.d("Repository", "Películas locales cargadas: ${offlineMovies.size}")
+
+            if (offlineMovies.isNotEmpty()) {
+                _moviesStateFlow.emit(offlineMovies)
+                return offlineMovies
+            }
+
+            return emptyList()
         } catch (e: Exception) {
-            Log.e("Repository", "Error obteniendo películas remotas: ${e.message}")
+            Log.e("Repository", "Error general: ${e.message}")
+            return emptyList()
         }
-
-        // Cargar datos offline
-        Log.d("Repository", "Intentando cargar películas desde la base de datos local")
-        val offlineMovies = databaseHelper.getOfflineMoviesForUser(userId)
-        if (offlineMovies.isNotEmpty()) {
-            Log.d("Repository", "Cargadas ${offlineMovies.size} películas locales")
-            _moviesStateFlow.emit(offlineMovies)
-            return offlineMovies
-        }
-
-        Log.d("Repository", "No se encontraron películas locales para usuario $userId")
-        return emptyList()
     }
 
     override suspend fun createMovie(movie: MoviePostRequest, jwt: String): Movie {
         val response = movieRemoteDataSource.createMovie(movie, jwt)
         if (response.isSuccessful) {
-            return response.body()?.toMovie() ?: throw Exception("La película creada es nula.")
+            val createdMovie = response.body()?.toMovie()
+                ?: throw Exception("La película creada es nula.")
+
+            // Obtener el ID de usuario de las preferencias compartidas
+            val userId = sharedPreferences.getInt("moviesUserId", -1)
+
+            // Forzar sincronización si hay un usuario válido
+            if (userId != -1) {
+                getUserMovies(userId)
+            }
+
+            return createdMovie
         } else {
             throw Exception("Error al crear película: ${response.message()}")
         }
@@ -187,8 +204,7 @@ class DefaultMovieRepository @Inject constructor(
         }
     }
 
-    // Añadir al DefaultMovieRepository
-    suspend fun debugDatabaseState(userId: Int): String {
+    /*suspend fun debugDatabaseState(userId: Int): String {
         return withContext(Dispatchers.IO) {
             val result = StringBuilder()
             try {
@@ -216,5 +232,5 @@ class DefaultMovieRepository @Inject constructor(
             }
             result.toString()
         }
-    }
+    }*/
 }

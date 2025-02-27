@@ -86,6 +86,10 @@ class AddMovieViewModel @Inject constructor(
                 // Llamar al repositorio para crear la película
                 val result = movieRepository.createMovie(moviePostRequest, jwt)
 
+                // Forzar sincronización para asegurar que la nueva película se guarde localmente
+                val userId = movie.moviesUserId ?: return@launch
+                movieRepository.getUserMovies(userId)
+
                 // Mostrar notificación
                 showMovieAddedNotification(movie)
 

@@ -21,28 +21,8 @@ class DatabaseHelper @Inject constructor(
     suspend fun saveMoviesForOffline(movies: List<Movie>, userId: Int) {
         withContext(Dispatchers.IO) {
             try {
-                // 1. Obtener IDs actuales de películas en la tabla
-                val currentMovies = appDatabase.movieDao().getAllFilms()
-                val currentIds = currentMovies.map { it.id }.toSet()
-
-                // 2. Obtener IDs de las películas actualizadas
-                val newIds = movies.map { it.id }.toSet()
-
-                // 3. Determinar qué películas deben eliminarse (están localmente pero no en el servidor)
-                val moviesToDelete = currentIds - newIds
-
-                // 4. Eliminar películas obsoletas
-                for (movieId in moviesToDelete) {
-                    try {
-                        Log.d("DatabaseHelper", "Eliminando película obsoleta: $movieId")
-                        appDatabase.movieDao().deleteFilmById(movieId)
-                    } catch (e: Exception) {
-                        Log.e("DatabaseHelper", "Error al eliminar película: ${e.message}")
-                    }
-                }
-
-                // 5. Guardar/actualizar películas actuales
-                for (movie in movies) {
+                // 1. Guardar películas en base de datos local
+                movies.forEach { movie ->
                     val movieEntity = MovieEntity(
                         id = movie.id,
                         title = movie.title,
@@ -55,21 +35,99 @@ class DatabaseHelper @Inject constructor(
 
                     try {
                         appDatabase.movieDao().insertFilm(movieEntity)
+                        Log.d("DatabaseHelper", "Película insertada: ${movie.title}")
                     } catch (e: Exception) {
                         try {
                             appDatabase.movieDao().updateFilm(movieEntity)
+                            Log.d("DatabaseHelper", "Película actualizada: ${movie.title}")
                         } catch (e2: Exception) {
-                            Log.e("DatabaseHelper", "Error actualizando película: ${e2.message}")
+                            Log.e("DatabaseHelper", "Error al actualizar película ${movie.title}: ${e2.message}")
                         }
+                    }
+
+                    // Crear la relación
+                    try {
+                        val relation = MoviesUserFilmEntity(
+                            moviesUserId = userId,
+                            filmId = movie.id
+                        )
+                        appDatabase.moviesUserFilmDao().insertRelation(relation)
+                        Log.d("DatabaseHelper", "Relación creada para película: ${movie.id}")
+                    } catch (e: Exception) {
+                        Log.e("DatabaseHelper", "Error al crear relación para película ${movie.id}: ${e.message}")
                     }
                 }
 
-                // 6. Guardar relaciones con el usuario
-                saveUserMovieRelations(userId, movies.map { it.id })
+                // 2. Guardar IDs de películas en SharedPreferences para persistencia
+                val sharedPrefs = context.getSharedPreferences("offline_movies", Context.MODE_PRIVATE)
+                val movieIds = movies.map { it.id.toString() }.toSet()
 
-                Log.d("DatabaseHelper", "Sincronización completada: guardadas ${movies.size} películas, eliminadas ${moviesToDelete.size}")
+                with(sharedPrefs.edit()) {
+                    putStringSet("user_${userId}_movies", movieIds)
+                    apply()
+                }
+
+                Log.d("DatabaseHelper", "Películas guardadas para usuario $userId: $movieIds")
+
             } catch (e: Exception) {
                 Log.e("DatabaseHelper", "Error en saveMoviesForOffline: ${e.message}")
+            }
+        }
+    }
+
+    suspend fun getOfflineMoviesForUser(userId: Int): List<Movie> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // 1. Intentar obtener de SharedPreferences
+                val sharedPrefs = context.getSharedPreferences("offline_movies", Context.MODE_PRIVATE)
+                val movieIdsSet = sharedPrefs.getStringSet("user_${userId}_movies", emptySet()) ?: emptySet()
+
+                Log.d("DatabaseHelper", "IDs de películas en SharedPreferences: $movieIdsSet")
+
+                // 2. Si hay IDs en SharedPreferences, buscar en la base de datos
+                if (movieIdsSet.isNotEmpty()) {
+                    val movieIds = movieIdsSet.map { it.toInt() }
+                    val movies = movieIds.mapNotNull { movieId ->
+                        val movie = appDatabase.movieDao().getMovieById(movieId)
+                        movie?.let {
+                            Movie(
+                                id = it.id,
+                                title = it.title,
+                                genre = it.genre,
+                                rating = it.rating,
+                                status = it.status,
+                                premiere = it.premiere,
+                                comments = it.comments ?: "",
+                                moviesUserId = userId
+                            )
+                        }
+                    }
+
+                    Log.d("DatabaseHelper", "Películas offline recuperadas: ${movies.size}")
+                    movies
+                } else {
+                    // 3. Si no hay películas, intentar obtener todas
+                    val allMovies = appDatabase.movieDao().getAllFilms()
+
+                    val movies = allMovies.map {
+                        Movie(
+                            id = it.id,
+                            title = it.title,
+                            genre = it.genre,
+                            rating = it.rating,
+                            status = it.status,
+                            premiere = it.premiere,
+                            comments = it.comments ?: "",
+                            moviesUserId = userId
+                        )
+                    }
+
+                    Log.d("DatabaseHelper", "Todas las películas recuperadas: ${movies.size}")
+                    movies
+                }
+            } catch (e: Exception) {
+                Log.e("DatabaseHelper", "Error en getOfflineMoviesForUser: ${e.message}")
+                emptyList()
             }
         }
     }
@@ -124,63 +182,6 @@ class DatabaseHelper @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e("DatabaseHelper", "Error guardando relaciones: ${e.message}")
-        }
-    }
-
-    suspend fun getOfflineMoviesForUser(userId: Int): List<Movie> {
-        return withContext(Dispatchers.IO) {
-            try {
-                // Obtener IDs de películas para este usuario
-                val sharedPrefs = context.getSharedPreferences("offline_movies", Context.MODE_PRIVATE)
-                val movieIds = sharedPrefs.getStringSet("user_${userId}_movies", emptySet()) ?: emptySet()
-
-                if (movieIds.isEmpty()) {
-                    // Si no hay IDs guardados, intentar obtener todas las películas como fallback
-                    val allMovies = appDatabase.movieDao().getAllFilms()
-                    return@withContext allMovies.map {
-                        Movie(
-                            id = it.id,
-                            title = it.title,
-                            genre = it.genre,
-                            rating = it.rating,
-                            status = it.status,
-                            premiere = it.premiere,
-                            comments = it.comments ?: "",
-                            moviesUserId = userId
-                        )
-                    }
-                }
-
-                // Obtener películas según los IDs guardados
-                val moviesList = mutableListOf<Movie>()
-                for (idStr in movieIds) {
-                    try {
-                        val id = idStr.toInt()
-                        val movie = appDatabase.movieDao().getMovieById(id) // Necesitarás añadir este método
-                        if (movie != null) {
-                            moviesList.add(
-                                Movie(
-                                    id = movie.id,
-                                    title = movie.title,
-                                    genre = movie.genre,
-                                    rating = movie.rating,
-                                    status = movie.status,
-                                    premiere = movie.premiere,
-                                    comments = movie.comments ?: "",
-                                    moviesUserId = userId
-                                )
-                            )
-                        }
-                    } catch (e: Exception) {
-                        Log.e("DatabaseHelper", "Error obteniendo película con ID $idStr: ${e.message}")
-                    }
-                }
-
-                return@withContext moviesList
-            } catch (e: Exception) {
-                Log.e("DatabaseHelper", "Error en getOfflineMoviesForUser: ${e.message}")
-                return@withContext emptyList<Movie>()
-            }
         }
     }
 
