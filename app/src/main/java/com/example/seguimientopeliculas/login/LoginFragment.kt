@@ -24,6 +24,7 @@ import com.example.seguimientopeliculas.data.remote.MovieRemoteDataSource
 import com.example.seguimientopeliculas.data.remote.StrapiApi
 import com.example.seguimientopeliculas.data.remote.UserRemoteDataSource
 import com.example.seguimientopeliculas.databinding.FragmentLoginBinding
+import com.example.seguimientopeliculas.workers.WorkManagerHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -48,6 +49,9 @@ class LoginFragment : Fragment() {
 
     @Inject
     lateinit var databaseHelper: DatabaseHelper
+
+    @Inject
+    lateinit var workManagerHelper: WorkManagerHelper
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -163,6 +167,8 @@ class LoginFragment : Fragment() {
                     } catch (e: Exception) {
                         Log.e("LoginFragment", "Error inicializando datos locales: ${e.message}")
                     }
+
+                    workManagerHelper.schedulePeriodicalSync()
 
                     findNavController().navigate(R.id.action_loginFragment_to_showMoviesFragment)
                 } else {

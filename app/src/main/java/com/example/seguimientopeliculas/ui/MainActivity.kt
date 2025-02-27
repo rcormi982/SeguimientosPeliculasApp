@@ -1,23 +1,51 @@
 package com.example.seguimientopeliculas.ui
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.seguimientopeliculas.R
 import com.example.seguimientopeliculas.databinding.ActivityMainBinding
+import com.example.seguimientopeliculas.workers.WorkManagerHelper
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
+    @Inject
+    lateinit var workManagerHelper: WorkManagerHelper
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            Log.d("Notifications", "Permiso de notificaciones concedido")
+        } else {
+            Log.d("Notifications", "Permiso de notificaciones denegado")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Solicitar permiso de notificaciones
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestNotificationPermissionIfNeeded()
+        }
+
+        checkUserLoggedInAndSetupSync()
 
         // Obtener NavController correctamente
         val navHostFragment =
@@ -87,6 +115,28 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e("MainActivity", "Error al manejar el clic del FAB: ${e.message}", e)
             }
+        }
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    private fun checkUserLoggedInAndSetupSync() {
+        val sharedPreferences = getSharedPreferences("app_preferences", Context.MODE_PRIVATE)
+        val isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false)
+
+        if (isLoggedIn) {
+            Log.d("MainActivity", "Usuario logueado, programando sincronización")
+            workManagerHelper.schedulePeriodicalSync()
+        } else {
+            Log.d("MainActivity", "Usuario no logueado")
         }
     }
 }

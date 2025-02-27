@@ -5,8 +5,11 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.seguimientopeliculas.MoviesApplication
+import com.example.seguimientopeliculas.R
 import com.example.seguimientopeliculas.data.Movie
 import com.example.seguimientopeliculas.data.MovieRepository
 import com.example.seguimientopeliculas.data.remote.MovieAttributes
@@ -19,6 +22,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
 
 @HiltViewModel
 class AddMovieViewModel @Inject constructor(
@@ -80,6 +86,9 @@ class AddMovieViewModel @Inject constructor(
                 // Llamar al repositorio para crear la película
                 val result = movieRepository.createMovie(moviePostRequest, jwt)
 
+                // Mostrar notificación
+                showMovieAddedNotification(movie)
+
                 // Manejar el resultado
                 _uiState.value = AddMovieUiState.Success(result)
             } catch (e: Exception) {
@@ -106,6 +115,32 @@ class AddMovieViewModel @Inject constructor(
             @Suppress("DEPRECATION")
             return networkInfo != null && networkInfo.isConnected
         }
+    }
+
+    private fun showMovieAddedNotification(movie: Movie) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        // Crear el intent para abrir la app cuando se toque la notificación
+        val intent = Intent(context, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // Construir la notificación
+        val notification = NotificationCompat.Builder(context, MoviesApplication.NOTIFICATION_CHANNEL_ID)
+            .setContentTitle("Película Agregada")
+            .setContentText("Has añadido '${movie.title}' a tu lista")
+            .setSmallIcon(R.drawable.claqueta3) // Usa tu ícono de la claqueta
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        // Mostrar la notificación
+        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
     }
 }
 

@@ -29,6 +29,7 @@ import com.example.seguimientopeliculas.R
 import com.example.seguimientopeliculas.data.remote.StrapiApi
 import com.example.seguimientopeliculas.data.remote.UserRemoteDataSource
 import com.example.seguimientopeliculas.databinding.FragmentProfileBinding
+import com.example.seguimientopeliculas.workers.WorkManagerHelper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.io.File
@@ -45,6 +46,9 @@ class ProfileFragment : Fragment() {
 
     @Inject
     lateinit var userRemoteDataSource: UserRemoteDataSource
+
+    @Inject
+    lateinit var workManagerHelper: WorkManagerHelper
 
     private var currentPhotoPath: Uri? = null
 
@@ -478,6 +482,9 @@ class ProfileFragment : Fragment() {
             clear()
             apply()
         }
+
+        workManagerHelper.cancelSyncWork()
+
         findNavController().navigate(R.id.action_profileFragment_to_loginFragment)
         Toast.makeText(requireContext(), "Sesión cerrada.", Toast.LENGTH_SHORT).show()
     }

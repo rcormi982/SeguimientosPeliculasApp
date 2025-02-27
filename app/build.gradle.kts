@@ -44,6 +44,9 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.hilt.work)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.room.runtime)
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
     implementation(libs.coil)

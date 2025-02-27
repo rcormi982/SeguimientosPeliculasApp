@@ -3,6 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools">
     <!--Permisos de internet-->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!--Permiso para verificar conectividad-->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!--Permiso para notificaciones-->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!--Permisos de cámara-->
     <uses-feature android:name="android.hardware.camera.any" />
     <uses-permission android:name="android.permission.CAMERA" />
