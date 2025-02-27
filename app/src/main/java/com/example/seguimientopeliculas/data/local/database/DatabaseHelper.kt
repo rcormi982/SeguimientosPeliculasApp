@@ -21,63 +21,7 @@ class DatabaseHelper @Inject constructor(
     suspend fun saveMoviesForOffline(movies: List<Movie>, userId: Int) {
         withContext(Dispatchers.IO) {
             try {
-                // 1. Asegurar que el usuario exista
-                val userEntity = try {
-                    appDatabase.userDao().getUserById(userId)
-                } catch (e: Exception) {
-                    // Si no existe, crear un usuario básico
-                    val defaultUsername = "User $userId"
-                    val defaultEmail = "user$userId@example.com"
-
-                    UserEntity(
-                        id = userId,
-                        username = defaultUsername,
-                        email = defaultEmail,
-                        password = ""
-                    ).also {
-                        appDatabase.userDao().insertUser(it)
-                    }
-
-                    // Después de insertar, volvemos a obtener el usuario para verificar
-                    try {
-                        appDatabase.userDao().getUserById(userId)
-                    } catch (e2: Exception) {
-                        Log.e("DatabaseHelper", "No se pudo obtener usuario después de crearlo: ${e2.message}")
-                        null // Si sigue fallando, devolvemos null
-                    }
-                }
-
-                // Comprobar si tenemos un usuario válido
-                if (userEntity == null) {
-                    Log.e("DatabaseHelper", "No se pudo obtener o crear usuario con ID: $userId")
-                    return@withContext
-                }
-
-                // 2. Obtener o crear MoviesUserEntity
-                val moviesUserId = try {
-                    val moviesUser = appDatabase.moviesUserDao().getMoviesUserById(userId)
-                    moviesUser.id // Usar el ID existente
-                } catch (e: Exception) {
-                    // Si no existe, crear MoviesUserEntity
-                    try {
-                        val moviesUserEntity = MoviesUserEntity(
-                            id = userId,
-                            user_Id = userId,
-                            username = userEntity.username,
-                            email = userEntity.email,
-                            password = ""
-                        )
-                        appDatabase.moviesUserDao().insertMoviesUser(moviesUserEntity)
-                        userId // Usar el mismo ID
-                    } catch (e2: Exception) {
-                        Log.e("DatabaseHelper", "Error al crear MoviesUserEntity: ${e2.message}")
-                        return@withContext
-                    }
-                }
-
-                Log.d("DatabaseHelper", "Usando moviesUserId: $moviesUserId para crear relaciones")
-
-                // 3. Guardar películas y relaciones
+                // 1. Guardar siempre las películas en la tabla film
                 movies.forEach { movie ->
                     try {
                         val movieEntity = MovieEntity(
@@ -93,41 +37,66 @@ class DatabaseHelper @Inject constructor(
                         // Insertar o actualizar película
                         appDatabase.movieDao().insertFilm(movieEntity)
                         Log.d("DatabaseHelper", "Película insertada/actualizada: ${movie.title}")
-
-                        // 4. Crear relación de película-usuario
-                        try {
-                            // Verificar si la relación ya existe
-                            val existingRelation = appDatabase.moviesUserFilmDao()
-                                .getRelationForUserAndFilm(moviesUserId, movie.id)
-
-                            if (existingRelation == null) {
-                                val relation = MoviesUserFilmEntity(
-                                    moviesUserId = moviesUserId,
-                                    filmId = movie.id
-                                )
-                                appDatabase.moviesUserFilmDao().insertRelation(relation)
-                                Log.d("DatabaseHelper", "Relación creada para película: ${movie.id} con usuario: $moviesUserId")
-                            } else {
-                                Log.d("DatabaseHelper", "Relación ya existente para película: ${movie.id} con usuario: $moviesUserId")
-                            }
-                        } catch (e: Exception) {
-                            Log.e("DatabaseHelper", "Error al crear relación para película ${movie.id}: ${e.message}")
-                        }
                     } catch (e: Exception) {
                         Log.e("DatabaseHelper", "Error al insertar/actualizar película ${movie.title}: ${e.message}")
                     }
                 }
 
-                // 5. Guardar IDs de películas en SharedPreferences
+                // 2. Verificar si el usuario existe (sin crear uno nuevo)
+                val userEntity = try {
+                    appDatabase.userDao().getUserById(userId)
+                    true
+                } catch (e: Exception) {
+                    Log.e("DatabaseHelper", "No se encontró el usuario con ID: $userId. No se crearán relaciones.")
+                    false
+                }
+
+                // Solo crear relaciones si el usuario existe
+                if (userEntity) {
+                    // 3. Verificar si el MoviesUserEntity existe
+                    val moviesUserExists = try {
+                        appDatabase.moviesUserDao().getMoviesUserById(userId)
+                        true
+                    } catch (e: Exception) {
+                        Log.e("DatabaseHelper", "No se encontró MoviesUserEntity con ID: $userId. No se crearán relaciones.")
+                        false
+                    }
+
+                    // 4. Crear relaciones solo si tanto el usuario como el moviesUser existen
+                    if (moviesUserExists) {
+                        movies.forEach { movie ->
+                            try {
+                                // Verificar si la relación ya existe
+                                val existingRelation = appDatabase.moviesUserFilmDao()
+                                    .getRelationForUserAndFilm(userId, movie.id)
+
+                                if (existingRelation == null) {
+                                    val relation = MoviesUserFilmEntity(
+                                        moviesUserId = userId,
+                                        filmId = movie.id
+                                    )
+                                    appDatabase.moviesUserFilmDao().insertRelation(relation)
+                                    Log.d("DatabaseHelper", "Relación creada para película: ${movie.id}")
+                                } else {
+                                    Log.d("DatabaseHelper", "Relación ya existente para película: ${movie.id}")
+                                }
+                            } catch (e: Exception) {
+                                Log.e("DatabaseHelper", "Error al crear relación para película ${movie.id}: ${e.message}")
+                            }
+                        }
+                    }
+                }
+
+                // 5. Guardar IDs de películas en SharedPreferences (siempre)
                 val sharedPrefs = context.getSharedPreferences("offline_movies", Context.MODE_PRIVATE)
                 val movieIds = movies.map { it.id.toString() }.toSet()
 
                 with(sharedPrefs.edit()) {
-                    putStringSet("user_${moviesUserId}_movies", movieIds)
+                    putStringSet("user_${userId}_movies", movieIds)
                     apply()
                 }
 
-                Log.d("DatabaseHelper", "Películas guardadas para usuario $moviesUserId: $movieIds")
+                Log.d("DatabaseHelper", "Películas guardadas para usuario $userId: $movieIds")
 
             } catch (e: Exception) {
                 Log.e("DatabaseHelper", "Error en saveMoviesForOffline: ${e.message}")
@@ -474,66 +443,7 @@ class DatabaseHelper @Inject constructor(
             try {
                 Log.d("DatabaseHelper", "Iniciando reset y sincronización para usuario $userId")
 
-                // 1. Verificar que el usuario existe en user
-                val userInUserTable = try {
-                    val user = appDatabase.userDao().getUserById(userId)
-                    Log.d("DatabaseHelper", "Usuario encontrado en tabla user: ${user.id}")
-                    user
-                } catch (e: Exception) {
-                    Log.e("DatabaseHelper", "Usuario NO encontrado en tabla user: $userId")
-
-                    // Crear usuario básico
-                    val newUser = UserEntity(
-                        id = userId,
-                        username = "User $userId",
-                        email = "user$userId@example.com",
-                        password = ""
-                    )
-                    appDatabase.userDao().insertUser(newUser)
-                    Log.d("DatabaseHelper", "Usuario creado en tabla user: $userId")
-                    newUser
-                }
-
-                // 2. Verificar que el usuario existe en movies_user
-                val userInMoviesUserTable = try {
-                    val moviesUser = appDatabase.moviesUserDao().getMoviesUserById(userId)
-                    Log.d("DatabaseHelper", "Usuario encontrado en tabla movies_user: ${moviesUser.id}")
-                    true
-                } catch (e: Exception) {
-                    Log.e("DatabaseHelper", "Usuario NO encontrado en tabla movies_user: $userId")
-
-                    // Crear MoviesUserEntity con el mismo ID
-                    try {
-                        val newMoviesUser = MoviesUserEntity(
-                            id = userId,
-                            user_Id = userId,
-                            username = userInUserTable.username,
-                            email = userInUserTable.email,
-                            password = ""
-                        )
-                        appDatabase.moviesUserDao().insertMoviesUser(newMoviesUser)
-                        Log.d("DatabaseHelper", "Usuario creado en tabla movies_user: $userId")
-                        true
-                    } catch (e2: Exception) {
-                        Log.e("DatabaseHelper", "Error al crear usuario en movies_user: ${e2.message}")
-                        false
-                    }
-                }
-
-                if (!userInMoviesUserTable) {
-                    Log.e("DatabaseHelper", "No se pudo crear el usuario en movies_user. Abortando sincronización.")
-                    return@withContext
-                }
-
-                // 3. Eliminar relaciones existentes
-                try {
-                    appDatabase.moviesUserFilmDao().deleteAllRelationsForUser(userId)
-                    Log.d("DatabaseHelper", "Relaciones eliminadas para usuario $userId")
-                } catch (e: Exception) {
-                    Log.e("DatabaseHelper", "Error al eliminar relaciones: ${e.message}")
-                }
-
-                // 4. Insertar películas
+                // 1. Siempre insertar películas
                 movies.forEach { movie ->
                     try {
                         val movieEntity = MovieEntity(
@@ -553,38 +463,61 @@ class DatabaseHelper @Inject constructor(
                     }
                 }
 
-                // 5. Verificar una vez más que el usuario existe
-                val userStillExists = userExistsInMoviesUser(userId)
-                if (!userStillExists) {
-                    Log.e("DatabaseHelper", "Usuario desapareció de movies_user después de insertar películas. Abortando creación de relaciones.")
-                    return@withContext
+                // 2. Verificar que el usuario existe en user y movies_user
+                val userExists = try {
+                    appDatabase.userDao().getUserById(userId)
+                    true
+                } catch (e: Exception) {
+                    Log.e("DatabaseHelper", "Usuario NO encontrado en tabla user: $userId")
+                    false
                 }
 
-                // 6. Crear relaciones
-                val movieIds = movies.map { it.id }
-                movieIds.forEach { movieId ->
+                val moviesUserExists = try {
+                    appDatabase.moviesUserDao().getMoviesUserById(userId)
+                    true
+                } catch (e: Exception) {
+                    Log.e("DatabaseHelper", "Usuario NO encontrado en tabla movies_user: $userId")
+                    false
+                }
+
+                // 3. Solo gestionar relaciones si ambos existen
+                if (userExists && moviesUserExists) {
+                    // Eliminar relaciones existentes
                     try {
-                        val relation = MoviesUserFilmEntity(
-                            moviesUserId = userId,
-                            filmId = movieId
-                        )
-                        appDatabase.moviesUserFilmDao().insertRelation(relation)
-                        Log.d("DatabaseHelper", "Relación creada: userId=$userId, movieId=$movieId")
+                        appDatabase.moviesUserFilmDao().deleteAllRelationsForUser(userId)
+                        Log.d("DatabaseHelper", "Relaciones eliminadas para usuario $userId")
                     } catch (e: Exception) {
-                        Log.e("DatabaseHelper", "Error al crear relación para película $movieId: ${e.message}")
+                        Log.e("DatabaseHelper", "Error al eliminar relaciones: ${e.message}")
                     }
+
+                    // Crear nuevas relaciones
+                    val movieIds = movies.map { it.id }
+                    movieIds.forEach { movieId ->
+                        try {
+                            val relation = MoviesUserFilmEntity(
+                                moviesUserId = userId,
+                                filmId = movieId
+                            )
+                            appDatabase.moviesUserFilmDao().insertRelation(relation)
+                            Log.d("DatabaseHelper", "Relación creada: userId=$userId, movieId=$movieId")
+                        } catch (e: Exception) {
+                            Log.e("DatabaseHelper", "Error al crear relación para película $movieId: ${e.message}")
+                        }
+                    }
+                } else {
+                    Log.d("DatabaseHelper", "No se crearán relaciones porque falta el usuario o el moviesUser")
                 }
 
-                // 7. Actualizar SharedPreferences
+                // 4. Actualizar SharedPreferences (siempre)
                 val sharedPrefs = context.getSharedPreferences("offline_movies", Context.MODE_PRIVATE)
-                val movieIdsSet = movieIds.map { it.toString() }.toSet()
+                val movieIdsSet = movies.map { it.id.toString() }.toSet()
 
                 with(sharedPrefs.edit()) {
                     putStringSet("user_${userId}_movies", movieIdsSet)
                     apply()
                 }
 
-                Log.d("DatabaseHelper", "Sincronización completada para usuario $userId con ${movieIds.size} películas")
+                Log.d("DatabaseHelper", "Sincronización completada para usuario $userId con ${movies.size} películas")
 
             } catch (e: Exception) {
                 Log.e("DatabaseHelper", "Error en resetAndSyncMovies: ${e.message}")
@@ -592,7 +525,7 @@ class DatabaseHelper @Inject constructor(
         }
     }
 
-    suspend fun checkDatabaseIntegrity(userId: Int) {
+    /*suspend fun checkDatabaseIntegrity(userId: Int) {
         withContext(Dispatchers.IO) {
             try {
                 val userExists = try {
@@ -629,7 +562,7 @@ class DatabaseHelper @Inject constructor(
                 Log.e("DBCheck", "Error en checkDatabaseIntegrity: ${e.message}")
             }
         }
-    }
+    }*/
     private suspend fun createMissingRelations(userId: Int, movies: List<Movie>) {
         withContext(Dispatchers.IO) {
             try {
@@ -701,7 +634,7 @@ class DatabaseHelper @Inject constructor(
         }
     }
 
-    suspend fun cleanAndRebuildDatabase() {
+    /*suspend fun cleanAndRebuildDatabase() {
         withContext(Dispatchers.IO) {
             try {
                 // 1. Eliminar todas las relaciones
@@ -731,5 +664,5 @@ class DatabaseHelper @Inject constructor(
                 Log.e("DatabaseHelper", "Error al limpiar la base de datos: ${e.message}")
             }
         }
-    }
+    }*/
 }

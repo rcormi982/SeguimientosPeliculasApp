@@ -19,5 +19,4 @@ interface MoviesUserDao {
     @Query("DELETE FROM movies_user")
     suspend fun deleteAllMoviesUsers()
 
-
 }
