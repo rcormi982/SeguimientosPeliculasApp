@@ -181,23 +181,35 @@ class ProfileFragment : Fragment() {
         }
 
         binding.deleteButton.setOnClickListener {
-            lifecycleScope.launch {
-                val success = deleteUser()
-                if (success) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Usuario eliminado correctamente.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    logoutUser()
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Error al eliminar el usuario.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+            // Mostrar diálogo de confirmación
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Eliminar cuenta")
+                .setMessage("¿Estás seguro que desea eliminar la cuenta?")
+                .setPositiveButton("Sí") { _, _ ->
+                    // Usuario confirmó eliminar cuenta
+                    lifecycleScope.launch {
+                        val success = deleteUser()
+                        if (success) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Usuario eliminado correctamente.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            logoutUser()
+                        } else {
+                            Toast.makeText(
+                                requireContext(),
+                                "Error al eliminar el usuario.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
                 }
-            }
+                .setNegativeButton("No") { dialog, _ ->
+                    // Usuario canceló la acción
+                    dialog.dismiss()
+                }
+                .show()
         }
 
         binding.logoutButton.setOnClickListener {

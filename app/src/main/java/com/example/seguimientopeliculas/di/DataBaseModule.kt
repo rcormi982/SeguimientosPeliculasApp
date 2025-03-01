@@ -50,7 +50,7 @@ object DatabaseModule {
     fun provideDatabaseHelper(
         appDatabase: AppDatabase,
         @ApplicationContext context: Context
-    ): DatabaseHelper {
-        return DatabaseHelper(appDatabase, context)
+    ): LocalDatabase {
+        return LocalDatabase(appDatabase, context)
     }
 }

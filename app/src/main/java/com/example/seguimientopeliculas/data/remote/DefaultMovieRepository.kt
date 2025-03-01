@@ -4,20 +4,16 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import com.example.seguimientopeliculas.data.local.database.AppDatabase
-import com.example.seguimientopeliculas.data.local.database.DatabaseHelper
-import com.example.seguimientopeliculas.data.local.entities.MovieEntity
-import com.example.seguimientopeliculas.data.local.entities.MoviesUserFilmEntity
+import com.example.seguimientopeliculas.data.local.database.LocalDatabase
 import com.example.seguimientopeliculas.data.local.iLocalDataSource.IMoviesUserFilmLocalDataSource
 import com.example.seguimientopeliculas.data.remote.MovieAttributes
 import com.example.seguimientopeliculas.data.remote.MoviePostRequest
 import com.example.seguimientopeliculas.data.remote.MovieRemoteDataSource
 import com.example.seguimientopeliculas.data.remote.MovieRaw
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import android.net.ConnectivityManager
@@ -26,7 +22,7 @@ import android.net.ConnectivityManager
 class DefaultMovieRepository @Inject constructor(
     private val movieRemoteDataSource: MovieRemoteDataSource,
     private val moviesUserFilmLocalDataSource: IMoviesUserFilmLocalDataSource,
-    private val databaseHelper: DatabaseHelper,
+    private val localDatabase: LocalDatabase,
     private val appDatabase: AppDatabase,
     private val sharedPreferences: SharedPreferences,
     @ApplicationContext private val context: Context
@@ -93,7 +89,7 @@ class DefaultMovieRepository @Inject constructor(
                     Log.d("Repository", "Películas remotas recibidas: ${remoteMovies.size}")
 
                     // Usar la nueva función de reset y sincronización
-                    databaseHelper.resetAndSyncMovies(userId, remoteMovies)
+                    localDatabase.resetAndSyncMovies(userId, remoteMovies)
 
                     _moviesStateFlow.emit(remoteMovies)
                     return remoteMovies
@@ -103,7 +99,7 @@ class DefaultMovieRepository @Inject constructor(
             // Cargar datos offline
             Log.d("Repository", "Sin conexión o respuesta fallida. Cargando películas locales")
 
-            val offlineMovies = databaseHelper.getOfflineMoviesForUser(userId)
+            val offlineMovies = localDatabase.getOfflineMoviesForUser(userId)
 
             Log.d("Repository", "Películas locales cargadas: ${offlineMovies.size}")
 

@@ -11,14 +11,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.seguimientopeliculas.R
-import com.example.seguimientopeliculas.data.DefaultMovieRepository
 import com.example.seguimientopeliculas.data.Movie
 import com.example.seguimientopeliculas.data.local.database.AppDatabase
-import com.example.seguimientopeliculas.data.local.database.DatabaseHelper
-import com.example.seguimientopeliculas.data.local.entities.MovieEntity
-import com.example.seguimientopeliculas.data.local.entities.MoviesUserEntity
-import com.example.seguimientopeliculas.data.local.entities.MoviesUserFilmEntity
-import com.example.seguimientopeliculas.data.local.entities.UserEntity
+import com.example.seguimientopeliculas.data.local.database.LocalDatabase
 import com.example.seguimientopeliculas.data.local.iLocalDataSource.IMoviesUserFilmLocalDataSource
 import com.example.seguimientopeliculas.data.remote.MovieRemoteDataSource
 import com.example.seguimientopeliculas.data.remote.StrapiApi
@@ -48,7 +43,7 @@ class LoginFragment : Fragment() {
     lateinit var moviesUserFilmLocalDataSource: IMoviesUserFilmLocalDataSource
 
     @Inject
-    lateinit var databaseHelper: DatabaseHelper
+    lateinit var localDatabase: LocalDatabase
 
     @Inject
     lateinit var workManagerHelper: WorkManagerHelper
@@ -157,7 +152,7 @@ class LoginFragment : Fragment() {
                             } ?: emptyList()
 
                             // Usar el nuevo método para inicializar la base de datos
-                            databaseHelper.initializeDatabaseWithUserAndMovies(
+                            localDatabase.initializeDatabaseWithUserAndMovies(
                                 userId = userId,
                                 username = userData.username,
                                 email = userData.email,
@@ -170,7 +165,7 @@ class LoginFragment : Fragment() {
 
                     workManagerHelper.schedulePeriodicalSync()
 
-                    findNavController().navigate(R.id.action_loginFragment_to_showMoviesFragment)
+                    //findNavController().navigate(R.id.action_loginFragment_to_showMoviesFragment)
                 } else {
                     Log.e("LoginFragment", "MoviesUserId no encontrado")
                     Toast.makeText(requireContext(), "Error al obtener información del usuario", Toast.LENGTH_LONG).show()

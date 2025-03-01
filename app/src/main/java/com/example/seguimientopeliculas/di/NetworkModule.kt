@@ -3,8 +3,7 @@ package com.example.seguimientopeliculas.di
 import MovieNetworkDataSource
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
-import com.example.seguimientopeliculas.data.local.database.DatabaseHelper
+import com.example.seguimientopeliculas.data.local.database.LocalDatabase
 import com.example.seguimientopeliculas.data.remote.MovieRemoteDataSource
 import com.example.seguimientopeliculas.data.remote.StrapiApi
 import com.example.seguimientopeliculas.data.remote.UserNetworkDataSource
@@ -82,8 +81,8 @@ class NetworkModule {
         strapiApi: StrapiApi,
         sharedPreferences: SharedPreferences,
         @ApplicationContext context: Context,
-        databaseHelper: DatabaseHelper
+        localDatabase: LocalDatabase
     ): UserRemoteDataSource {
-        return UserNetworkDataSource(strapiApi, sharedPreferences, context, databaseHelper)
+        return UserNetworkDataSource(strapiApi, sharedPreferences, context, localDatabase)
     }
 }

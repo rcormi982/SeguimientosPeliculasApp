@@ -13,7 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class DatabaseHelper @Inject constructor(
+class LocalDatabase @Inject constructor(
     private val appDatabase: AppDatabase,
     private val context: Context
 ) {
@@ -36,9 +36,9 @@ class DatabaseHelper @Inject constructor(
 
                         // Insertar o actualizar película
                         appDatabase.movieDao().insertFilm(movieEntity)
-                        Log.d("DatabaseHelper", "Película insertada/actualizada: ${movie.title}")
+                        Log.d("LocalDatabase", "Película insertada/actualizada: ${movie.title}")
                     } catch (e: Exception) {
-                        Log.e("DatabaseHelper", "Error al insertar/actualizar película ${movie.title}: ${e.message}")
+                        Log.e("LocalDatabase", "Error al insertar/actualizar película ${movie.title}: ${e.message}")
                     }
                 }
 
@@ -47,7 +47,7 @@ class DatabaseHelper @Inject constructor(
                     appDatabase.userDao().getUserById(userId)
                     true
                 } catch (e: Exception) {
-                    Log.e("DatabaseHelper", "No se encontró el usuario con ID: $userId. No se crearán relaciones.")
+                    Log.e("LocalDatabase", "No se encontró el usuario con ID: $userId. No se crearán relaciones.")
                     false
                 }
 
@@ -58,7 +58,7 @@ class DatabaseHelper @Inject constructor(
                         appDatabase.moviesUserDao().getMoviesUserById(userId)
                         true
                     } catch (e: Exception) {
-                        Log.e("DatabaseHelper", "No se encontró MoviesUserEntity con ID: $userId. No se crearán relaciones.")
+                        Log.e("LocalDatabase", "No se encontró MoviesUserEntity con ID: $userId. No se crearán relaciones.")
                         false
                     }
 
@@ -76,12 +76,12 @@ class DatabaseHelper @Inject constructor(
                                         filmId = movie.id
                                     )
                                     appDatabase.moviesUserFilmDao().insertRelation(relation)
-                                    Log.d("DatabaseHelper", "Relación creada para película: ${movie.id}")
+                                    Log.d("LocalDatabase", "Relación creada para película: ${movie.id}")
                                 } else {
-                                    Log.d("DatabaseHelper", "Relación ya existente para película: ${movie.id}")
+                                    Log.d("LocalDatabase", "Relación ya existente para película: ${movie.id}")
                                 }
                             } catch (e: Exception) {
-                                Log.e("DatabaseHelper", "Error al crear relación para película ${movie.id}: ${e.message}")
+                                Log.e("LocalDatabase", "Error al crear relación para película ${movie.id}: ${e.message}")
                             }
                         }
                     }
@@ -96,10 +96,10 @@ class DatabaseHelper @Inject constructor(
                     apply()
                 }
 
-                Log.d("DatabaseHelper", "Películas guardadas para usuario $userId: $movieIds")
+                Log.d("LocalDatabase", "Películas guardadas para usuario $userId: $movieIds")
 
             } catch (e: Exception) {
-                Log.e("DatabaseHelper", "Error en saveMoviesForOffline: ${e.message}")
+                Log.e("LocalDatabase", "Error en saveMoviesForOffline: ${e.message}")
             }
         }
     }
@@ -107,7 +107,7 @@ class DatabaseHelper @Inject constructor(
     suspend fun getOfflineMoviesForUser(userId: Int): List<Movie> {
         return withContext(Dispatchers.IO) {
             try {
-                Log.d("DatabaseHelper", "Obteniendo películas offline para usuario: $userId")
+                Log.d("LocalDatabase", "Obteniendo películas offline para usuario: $userId")
 
                 // Utilizar directamente la relación de la base de datos para obtener las películas
                 val moviesFromRelations = try {
@@ -126,10 +126,10 @@ class DatabaseHelper @Inject constructor(
                         )
                     }
 
-                    Log.d("DatabaseHelper", "Recuperadas ${movies.size} películas desde relaciones en la base de datos")
+                    Log.d("LocalDatabase", "Recuperadas ${movies.size} películas desde relaciones en la base de datos")
                     movies
                 } catch (e: Exception) {
-                    Log.e("DatabaseHelper", "Error al obtener películas desde relaciones: ${e.message}")
+                    Log.e("LocalDatabase", "Error al obtener películas desde relaciones: ${e.message}")
                     emptyList()
                 }
 
@@ -139,12 +139,12 @@ class DatabaseHelper @Inject constructor(
                 }
 
                 // Como fallback, intentar obtener desde SharedPreferences
-                Log.d("DatabaseHelper", "No se encontraron relaciones, intentando desde SharedPreferences")
+                Log.d("LocalDatabase", "No se encontraron relaciones, intentando desde SharedPreferences")
                 val sharedPrefs = context.getSharedPreferences("offline_movies", Context.MODE_PRIVATE)
                 val movieIdsSet = sharedPrefs.getStringSet("user_${userId}_movies", emptySet()) ?: emptySet()
 
                 if (movieIdsSet.isNotEmpty()) {
-                    Log.d("DatabaseHelper", "IDs de películas en SharedPreferences: $movieIdsSet")
+                    Log.d("LocalDatabase", "IDs de películas en SharedPreferences: $movieIdsSet")
 
                     val movieIds = movieIdsSet.map { it.toInt() }
                     val movies = movieIds.mapNotNull { movieId ->
@@ -163,12 +163,12 @@ class DatabaseHelper @Inject constructor(
                                 )
                             }
                         } catch (e: Exception) {
-                            Log.e("DatabaseHelper", "Error al recuperar película $movieId: ${e.message}")
+                            Log.e("LocalDatabase", "Error al recuperar película $movieId: ${e.message}")
                             null
                         }
                     }
 
-                    Log.d("DatabaseHelper", "Películas recuperadas desde SharedPreferences: ${movies.size}")
+                    Log.d("LocalDatabase", "Películas recuperadas desde SharedPreferences: ${movies.size}")
 
                     // Si encontramos películas desde SharedPreferences, intentemos crear las relaciones
                     // para sincronizar la base de datos
@@ -192,11 +192,11 @@ class DatabaseHelper @Inject constructor(
                         )
                     }
 
-                    Log.d("DatabaseHelper", "Recuperadas todas las películas como último recurso: ${allMovies.size}")
+                    Log.d("LocalDatabase", "Recuperadas todas las películas como último recurso: ${allMovies.size}")
                     allMovies
                 }
             } catch (e: Exception) {
-                Log.e("DatabaseHelper", "Error general en getOfflineMoviesForUser: ${e.message}")
+                Log.e("LocalDatabase", "Error general en getOfflineMoviesForUser: ${e.message}")
                 emptyList()
             }
         }
@@ -251,7 +251,7 @@ class DatabaseHelper @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            Log.e("DatabaseHelper", "Error guardando relaciones: ${e.message}")
+            Log.e("LocalDatabase", "Error guardando relaciones: ${e.message}")
         }
     }
 
@@ -267,9 +267,9 @@ class DatabaseHelper @Inject constructor(
                     apply()
                 }
 
-                Log.d("DatabaseHelper", "Datos del usuario guardados para uso offline")
+                Log.d("LocalDatabase", "Datos del usuario guardados para uso offline")
             } catch (e: Exception) {
-                Log.e("DatabaseHelper", "Error guardando datos del usuario: ${e.message}")
+                Log.e("LocalDatabase", "Error guardando datos del usuario: ${e.message}")
             }
         }
     }
@@ -300,13 +300,13 @@ class DatabaseHelper @Inject constructor(
                     movies_user = null
                 )
             } catch (e: Exception) {
-                Log.e("DatabaseHelper", "Error obteniendo datos del usuario: ${e.message}")
+                Log.e("LocalDatabase", "Error obteniendo datos del usuario: ${e.message}")
                 null
             }
         }
     }
 
-    // Añadir a DatabaseHelper.kt
+    // Añadir a LocalDatabase.kt
 
     suspend fun saveMoviesUserForOffline(moviesUser: MoviesUser) {
         withContext(Dispatchers.IO) {
@@ -321,9 +321,9 @@ class DatabaseHelper @Inject constructor(
                     apply()
                 }
 
-                Log.d("DatabaseHelper", "Datos de MoviesUser guardados para modo offline")
+                Log.d("LocalDatabase", "Datos de MoviesUser guardados para modo offline")
             } catch (e: Exception) {
-                Log.e("DatabaseHelper", "Error guardando datos de MoviesUser: ${e.message}")
+                Log.e("LocalDatabase", "Error guardando datos de MoviesUser: ${e.message}")
             }
         }
     }
@@ -357,7 +357,7 @@ class DatabaseHelper @Inject constructor(
                     image = null
                 )
             } catch (e: Exception) {
-                Log.e("DatabaseHelper", "Error obteniendo datos de MoviesUser: ${e.message}")
+                Log.e("LocalDatabase", "Error obteniendo datos de MoviesUser: ${e.message}")
                 null
             }
         }
@@ -370,7 +370,7 @@ class DatabaseHelper @Inject constructor(
     ) {
         withContext(Dispatchers.IO) {
             try {
-                Log.d("DatabaseHelper", "Inicializando base de datos para usuario: $userId")
+                Log.d("LocalDatabase", "Inicializando base de datos para usuario: $userId")
 
                 // 1. Insertar el UserEntity
                 try {
@@ -381,9 +381,9 @@ class DatabaseHelper @Inject constructor(
                         password = ""
                     )
                     appDatabase.userDao().insertUser(userEntity)
-                    Log.d("DatabaseHelper", "Usuario guardado en la tabla user")
+                    Log.d("LocalDatabase", "Usuario guardado en la tabla user")
                 } catch (e: Exception) {
-                    Log.e("DatabaseHelper", "Error guardando UserEntity: ${e.message}")
+                    Log.e("LocalDatabase", "Error guardando UserEntity: ${e.message}")
                 }
 
                 // 2. Insertar el MoviesUserEntity
@@ -396,9 +396,9 @@ class DatabaseHelper @Inject constructor(
                         password = ""
                     )
                     appDatabase.moviesUserDao().insertMoviesUser(moviesUserEntity)
-                    Log.d("DatabaseHelper", "Usuario guardado en la tabla movies_user")
+                    Log.d("LocalDatabase", "Usuario guardado en la tabla movies_user")
                 } catch (e: Exception) {
-                    Log.e("DatabaseHelper", "Error guardando MoviesUserEntity: ${e.message}")
+                    Log.e("LocalDatabase", "Error guardando MoviesUserEntity: ${e.message}")
                 }
 
                 // 3. Insertar las películas y relaciones
@@ -416,7 +416,7 @@ class DatabaseHelper @Inject constructor(
                         )
 
                         appDatabase.movieDao().insertFilm(movieEntity)
-                        Log.d("DatabaseHelper", "Película guardada: ${movie.title}")
+                        Log.d("LocalDatabase", "Película guardada: ${movie.title}")
 
                         // Crear la relación
                         val relation = MoviesUserFilmEntity(
@@ -425,15 +425,15 @@ class DatabaseHelper @Inject constructor(
                         )
 
                         appDatabase.moviesUserFilmDao().insertRelation(relation)
-                        Log.d("DatabaseHelper", "Relación creada para película: ${movie.id}")
+                        Log.d("LocalDatabase", "Relación creada para película: ${movie.id}")
                     } catch (e: Exception) {
-                        Log.e("DatabaseHelper", "Error al procesar película ${movie.id}: ${e.message}")
+                        Log.e("LocalDatabase", "Error al procesar película ${movie.id}: ${e.message}")
                     }
                 }
 
-                Log.d("DatabaseHelper", "Inicialización de base de datos completada")
+                Log.d("LocalDatabase", "Inicialización de base de datos completada")
             } catch (e: Exception) {
-                Log.e("DatabaseHelper", "Error general en initializeDatabaseWithUserAndMovies: ${e.message}")
+                Log.e("LocalDatabase", "Error general en initializeDatabaseWithUserAndMovies: ${e.message}")
             }
         }
     }
@@ -441,7 +441,7 @@ class DatabaseHelper @Inject constructor(
     suspend fun resetAndSyncMovies(userId: Int, movies: List<Movie>) {
         withContext(Dispatchers.IO) {
             try {
-                Log.d("DatabaseHelper", "Iniciando reset y sincronización para usuario $userId")
+                Log.d("LocalDatabase", "Iniciando reset y sincronización para usuario $userId")
 
                 // 1. Siempre insertar películas
                 movies.forEach { movie ->
@@ -457,9 +457,9 @@ class DatabaseHelper @Inject constructor(
                         )
 
                         appDatabase.movieDao().insertFilm(movieEntity)
-                        Log.d("DatabaseHelper", "Película insertada: ${movie.title} (ID: ${movie.id})")
+                        Log.d("LocalDatabase", "Película insertada: ${movie.title} (ID: ${movie.id})")
                     } catch (e: Exception) {
-                        Log.e("DatabaseHelper", "Error al insertar película ${movie.id}: ${e.message}")
+                        Log.e("LocalDatabase", "Error al insertar película ${movie.id}: ${e.message}")
                     }
                 }
 
@@ -468,7 +468,7 @@ class DatabaseHelper @Inject constructor(
                     appDatabase.userDao().getUserById(userId)
                     true
                 } catch (e: Exception) {
-                    Log.e("DatabaseHelper", "Usuario NO encontrado en tabla user: $userId")
+                    Log.e("LocalDatabase", "Usuario NO encontrado en tabla user: $userId")
                     false
                 }
 
@@ -476,7 +476,7 @@ class DatabaseHelper @Inject constructor(
                     appDatabase.moviesUserDao().getMoviesUserById(userId)
                     true
                 } catch (e: Exception) {
-                    Log.e("DatabaseHelper", "Usuario NO encontrado en tabla movies_user: $userId")
+                    Log.e("LocalDatabase", "Usuario NO encontrado en tabla movies_user: $userId")
                     false
                 }
 
@@ -485,9 +485,9 @@ class DatabaseHelper @Inject constructor(
                     // Eliminar relaciones existentes
                     try {
                         appDatabase.moviesUserFilmDao().deleteAllRelationsForUser(userId)
-                        Log.d("DatabaseHelper", "Relaciones eliminadas para usuario $userId")
+                        Log.d("LocalDatabase", "Relaciones eliminadas para usuario $userId")
                     } catch (e: Exception) {
-                        Log.e("DatabaseHelper", "Error al eliminar relaciones: ${e.message}")
+                        Log.e("LocalDatabase", "Error al eliminar relaciones: ${e.message}")
                     }
 
                     // Crear nuevas relaciones
@@ -499,13 +499,13 @@ class DatabaseHelper @Inject constructor(
                                 filmId = movieId
                             )
                             appDatabase.moviesUserFilmDao().insertRelation(relation)
-                            Log.d("DatabaseHelper", "Relación creada: userId=$userId, movieId=$movieId")
+                            Log.d("LocalDatabase", "Relación creada: userId=$userId, movieId=$movieId")
                         } catch (e: Exception) {
-                            Log.e("DatabaseHelper", "Error al crear relación para película $movieId: ${e.message}")
+                            Log.e("LocalDatabase", "Error al crear relación para película $movieId: ${e.message}")
                         }
                     }
                 } else {
-                    Log.d("DatabaseHelper", "No se crearán relaciones porque falta el usuario o el moviesUser")
+                    Log.d("LocalDatabase", "No se crearán relaciones porque falta el usuario o el moviesUser")
                 }
 
                 // 4. Actualizar SharedPreferences (siempre)
@@ -517,10 +517,10 @@ class DatabaseHelper @Inject constructor(
                     apply()
                 }
 
-                Log.d("DatabaseHelper", "Sincronización completada para usuario $userId con ${movies.size} películas")
+                Log.d("LocalDatabase", "Sincronización completada para usuario $userId con ${movies.size} películas")
 
             } catch (e: Exception) {
-                Log.e("DatabaseHelper", "Error en resetAndSyncMovies: ${e.message}")
+                Log.e("LocalDatabase", "Error en resetAndSyncMovies: ${e.message}")
             }
         }
     }
@@ -584,13 +584,13 @@ class DatabaseHelper @Inject constructor(
                         appDatabase.moviesUserDao().insertMoviesUser(moviesUserEntity)
                         true
                     } catch (e2: Exception) {
-                        Log.e("DatabaseHelper", "No se pudo crear MoviesUserEntity: ${e2.message}")
+                        Log.e("LocalDatabase", "No se pudo crear MoviesUserEntity: ${e2.message}")
                         false
                     }
                 }
 
                 if (!moviesUserExists) {
-                    Log.e("DatabaseHelper", "No se pudo asegurar que exista el MoviesUser $userId")
+                    Log.e("LocalDatabase", "No se pudo asegurar que exista el MoviesUser $userId")
                     return@withContext
                 }
 
@@ -611,13 +611,13 @@ class DatabaseHelper @Inject constructor(
                             relationsCreated++
                         }
                     } catch (e: Exception) {
-                        Log.e("DatabaseHelper", "Error al crear relación para película ${movie.id}: ${e.message}")
+                        Log.e("LocalDatabase", "Error al crear relación para película ${movie.id}: ${e.message}")
                     }
                 }
 
-                Log.d("DatabaseHelper", "Se crearon $relationsCreated relaciones faltantes para usuario $userId")
+                Log.d("LocalDatabase", "Se crearon $relationsCreated relaciones faltantes para usuario $userId")
             } catch (e: Exception) {
-                Log.e("DatabaseHelper", "Error en createMissingRelations: ${e.message}")
+                Log.e("LocalDatabase", "Error en createMissingRelations: ${e.message}")
             }
         }
     }
@@ -626,10 +626,10 @@ class DatabaseHelper @Inject constructor(
     suspend fun userExistsInMoviesUser(userId: Int): Boolean {
         return try {
             val user = appDatabase.moviesUserDao().getMoviesUserById(userId)
-            Log.d("DatabaseHelper", "Usuario encontrado en movies_user: ${user.id}")
+            Log.d("LocalDatabase", "Usuario encontrado en movies_user: ${user.id}")
             true
         } catch (e: Exception) {
-            Log.e("DatabaseHelper", "Usuario NO encontrado en movies_user: $userId")
+            Log.e("LocalDatabase", "Usuario NO encontrado en movies_user: $userId")
             false
         }
     }
@@ -639,18 +639,18 @@ class DatabaseHelper @Inject constructor(
             try {
                 // 1. Eliminar todas las relaciones
                 appDatabase.moviesUserFilmDao().deleteAllRelations()
-                Log.d("DatabaseHelper", "Todas las relaciones eliminadas")
+                Log.d("LocalDatabase", "Todas las relaciones eliminadas")
 
                 // 2. Eliminar todas las películas
                 appDatabase.movieDao().deleteAllMovies()
-                Log.d("DatabaseHelper", "Todas las películas eliminadas")
+                Log.d("LocalDatabase", "Todas las películas eliminadas")
 
                 // 3. Eliminar todos los usuarios
                 appDatabase.moviesUserDao().deleteAllMoviesUsers()
-                Log.d("DatabaseHelper", "Todos los usuarios de movies_user eliminados")
+                Log.d("LocalDatabase", "Todos los usuarios de movies_user eliminados")
 
                 appDatabase.userDao().deleteAllUsers()
-                Log.d("DatabaseHelper", "Todos los usuarios eliminados")
+                Log.d("LocalDatabase", "Todos los usuarios eliminados")
 
                 // 4. Limpiar SharedPreferences
                 val sharedPrefs = context.getSharedPreferences("offline_movies", Context.MODE_PRIVATE)
@@ -659,9 +659,9 @@ class DatabaseHelper @Inject constructor(
                     apply()
                 }
 
-                Log.d("DatabaseHelper", "Base de datos limpiada completamente")
+                Log.d("LocalDatabase", "Base de datos limpiada completamente")
             } catch (e: Exception) {
-                Log.e("DatabaseHelper", "Error al limpiar la base de datos: ${e.message}")
+                Log.e("LocalDatabase", "Error al limpiar la base de datos: ${e.message}")
             }
         }
     }*/

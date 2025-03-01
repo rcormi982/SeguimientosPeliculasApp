@@ -10,7 +10,7 @@ import com.example.seguimientopeliculas.data.MoviesUser
 import com.example.seguimientopeliculas.data.UpdateMoviesUserPayload
 import com.example.seguimientopeliculas.data.PhotoUploadResult
 import com.example.seguimientopeliculas.data.UpdateData
-import com.example.seguimientopeliculas.data.local.database.DatabaseHelper
+import com.example.seguimientopeliculas.data.local.database.LocalDatabase
 import com.example.seguimientopeliculas.login.RegisterResponse
 import com.example.seguimientopeliculas.login.UserResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -27,7 +27,7 @@ class UserNetworkDataSource @Inject constructor(
     private val strapiApi: StrapiApi,
     private val sharedPreferences: SharedPreferences,
     private val context: Context,
-    private val databaseHelper: DatabaseHelper
+    private val localDatabase: LocalDatabase
 ) : UserRemoteDataSource {
 
     override suspend fun registerUser(
@@ -98,7 +98,7 @@ class UserNetworkDataSource @Inject constructor(
                     ?: throw Exception("No se pudo obtener la información del usuario")
 
                 // Guardar datos para uso offline
-                databaseHelper.saveUserDataForOffline(userData)
+                localDatabase.saveUserDataForOffline(userData)
 
                 return userData
             } else {
@@ -108,7 +108,7 @@ class UserNetworkDataSource @Inject constructor(
             Log.e("UserNetworkDataSource", "Error obteniendo datos remotos del usuario: ${e.message}")
 
             // Intentar obtener datos del usuario desde almacenamiento local
-            val offlineUserData = databaseHelper.getOfflineUserData()
+            val offlineUserData = localDatabase.getOfflineUserData()
             if (offlineUserData != null) {
                 Log.d("UserNetworkDataSource", "Usando datos de usuario almacenados localmente")
                 return offlineUserData
@@ -143,7 +143,7 @@ class UserNetworkDataSource @Inject constructor(
                 )
 
                 // Guardar para uso offline
-                databaseHelper.saveMoviesUserForOffline(moviesUser)
+                localDatabase.saveMoviesUserForOffline(moviesUser)
 
                 return moviesUser
             } else {
@@ -153,7 +153,7 @@ class UserNetworkDataSource @Inject constructor(
             Log.e("UserNetworkDataSource", "Error obteniendo datos remotos de MoviesUser: ${e.message}")
 
             // Intentar obtener datos desde almacenamiento local
-            val offlineMoviesUser = databaseHelper.getOfflineMoviesUserData()
+            val offlineMoviesUser = localDatabase.getOfflineMoviesUserData()
             if (offlineMoviesUser != null) {
                 Log.d("UserNetworkDataSource", "Usando datos de MoviesUser almacenados localmente")
                 return offlineMoviesUser
@@ -349,7 +349,7 @@ class UserNetworkDataSource @Inject constructor(
                 }
 
                 // Guardar para uso offline
-                databaseHelper.saveMoviesForOffline(movies, userId)
+                localDatabase.saveMoviesForOffline(movies, userId)
 
                 return movies
             } else {
@@ -359,7 +359,7 @@ class UserNetworkDataSource @Inject constructor(
             Log.e("UserNetworkDataSource", "Error obteniendo películas remotas: ${e.message}")
 
             // Intentar obtener datos locales
-            val offlineMovies = databaseHelper.getOfflineMoviesForUser(userId)
+            val offlineMovies = localDatabase.getOfflineMoviesForUser(userId)
             if (offlineMovies.isNotEmpty()) {
                 Log.d("UserNetworkDataSource", "Usando películas almacenadas localmente")
                 return offlineMovies
