@@ -50,7 +50,7 @@ class MovieListEditFragment : Fragment() {
 
         // Cargar las películas desde el ViewModel
         lifecycleScope.launch {
-            viewModel.loadMovies(requireContext())
+            viewModel.loadMovies()
         }
 
         // Observamos los cambios en el estado de la UI

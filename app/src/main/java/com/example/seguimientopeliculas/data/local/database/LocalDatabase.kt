@@ -3,7 +3,7 @@ package com.example.seguimientopeliculas.data.local.database
 import android.content.Context
 import android.util.Log
 import com.example.seguimientopeliculas.data.remote.models.Movie
-import com.example.seguimientopeliculas.data.MoviesUser
+import com.example.seguimientopeliculas.data.remote.models.MoviesUser
 import com.example.seguimientopeliculas.data.local.entities.MovieEntity
 import com.example.seguimientopeliculas.data.local.entities.MoviesUserEntity
 import com.example.seguimientopeliculas.data.local.entities.MoviesUserFilmEntity
@@ -525,44 +525,6 @@ class LocalDatabase @Inject constructor(
         }
     }
 
-    /*suspend fun checkDatabaseIntegrity(userId: Int) {
-        withContext(Dispatchers.IO) {
-            try {
-                val userExists = try {
-                    val user = appDatabase.userDao().getUserById(userId)
-                    Log.d("DBCheck", "Usuario existe: $userId (${user.username})")
-                    true
-                } catch (e: Exception) {
-                    Log.e("DBCheck", "Usuario NO existe en tabla user: $userId")
-                    false
-                }
-
-                val moviesUserExists = try {
-                    val moviesUser = appDatabase.moviesUserDao().getMoviesUserById(userId)
-                    Log.d("DBCheck", "MoviesUser existe: $userId (${moviesUser.username})")
-                    true
-                } catch (e: Exception) {
-                    Log.e("DBCheck", "Usuario NO existe en tabla movies_user: $userId")
-                    false
-                }
-
-                // Verificar películas y relaciones
-                val movies = appDatabase.movieDao().getAllFilms()
-                Log.d("DBCheck", "Total películas: ${movies.size}")
-
-                val relations = try {
-                    val count = appDatabase.moviesUserFilmDao().countRelationsForUser(userId)
-                    Log.d("DBCheck", "Total relaciones para usuario $userId: $count")
-                    count
-                } catch (e: Exception) {
-                    Log.e("DBCheck", "Error contando relaciones: ${e.message}")
-                    0
-                }
-            } catch (e: Exception) {
-                Log.e("DBCheck", "Error en checkDatabaseIntegrity: ${e.message}")
-            }
-        }
-    }*/
     private suspend fun createMissingRelations(userId: Int, movies: List<Movie>) {
         withContext(Dispatchers.IO) {
             try {
@@ -633,36 +595,4 @@ class LocalDatabase @Inject constructor(
             false
         }
     }
-
-    /*suspend fun cleanAndRebuildDatabase() {
-        withContext(Dispatchers.IO) {
-            try {
-                // 1. Eliminar todas las relaciones
-                appDatabase.moviesUserFilmDao().deleteAllRelations()
-                Log.d("LocalDatabase", "Todas las relaciones eliminadas")
-
-                // 2. Eliminar todas las películas
-                appDatabase.movieDao().deleteAllMovies()
-                Log.d("LocalDatabase", "Todas las películas eliminadas")
-
-                // 3. Eliminar todos los usuarios
-                appDatabase.moviesUserDao().deleteAllMoviesUsers()
-                Log.d("LocalDatabase", "Todos los usuarios de movies_user eliminados")
-
-                appDatabase.userDao().deleteAllUsers()
-                Log.d("LocalDatabase", "Todos los usuarios eliminados")
-
-                // 4. Limpiar SharedPreferences
-                val sharedPrefs = context.getSharedPreferences("offline_movies", Context.MODE_PRIVATE)
-                with(sharedPrefs.edit()) {
-                    clear()
-                    apply()
-                }
-
-                Log.d("LocalDatabase", "Base de datos limpiada completamente")
-            } catch (e: Exception) {
-                Log.e("LocalDatabase", "Error al limpiar la base de datos: ${e.message}")
-            }
-        }
-    }*/
 }

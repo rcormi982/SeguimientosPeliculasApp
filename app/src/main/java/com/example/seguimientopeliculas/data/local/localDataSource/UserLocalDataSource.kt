@@ -1,6 +1,6 @@
 package com.example.seguimientopeliculas.data.local.localDataSource
 
-import com.example.seguimientopeliculas.data.MoviesUser
+import com.example.seguimientopeliculas.data.remote.models.MoviesUser
 import com.example.seguimientopeliculas.data.local.database.UserDao
 import com.example.seguimientopeliculas.data.local.iLocalDataSource.IUserLocalDataSource
 import com.example.seguimientopeliculas.data.local.localModelMapping.toExternal

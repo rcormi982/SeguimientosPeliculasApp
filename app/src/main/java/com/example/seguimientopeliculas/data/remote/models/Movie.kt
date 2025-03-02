@@ -1,7 +1,5 @@
 package com.example.seguimientopeliculas.data.remote.models
 
-import com.example.seguimientopeliculas.data.User
-
 data class Movie(
     val id: Int,
     val title: String,

@@ -1,12 +1,11 @@
 package com.example.seguimientopeliculas.data.local.iLocalDataSource
 
-import com.example.seguimientopeliculas.data.MoviesUser
+import com.example.seguimientopeliculas.data.remote.models.MoviesUser
 
 interface IUserLocalDataSource {
 
     //Obtiene los datos del usuario actualmente logueado.
     suspend fun getLoggedUser(): MoviesUser
-
 
     //Actualiza la información del usuario (nombre, email, contraseña).
     suspend fun updateLoggedUser(user: MoviesUser)

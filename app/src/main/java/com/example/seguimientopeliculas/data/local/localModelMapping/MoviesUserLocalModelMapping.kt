@@ -1,6 +1,6 @@
 package com.example.seguimientopeliculas.data.local.localModelMapping
 
-import com.example.seguimientopeliculas.data.MoviesUser
+import com.example.seguimientopeliculas.data.remote.models.MoviesUser
 import com.example.seguimientopeliculas.data.local.entities.MoviesUserEntity
 import com.example.seguimientopeliculas.data.local.entities.UserEntity
 

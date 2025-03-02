@@ -1,8 +1,8 @@
 package com.example.seguimientopeliculas.data.remote.dataSource
 import android.net.Uri  // Cambiamos de coil3.Uri a android.net.Uri
 import com.example.seguimientopeliculas.data.remote.models.Movie
-import com.example.seguimientopeliculas.data.MoviesUser
-import com.example.seguimientopeliculas.data.PhotoUploadResult
+import com.example.seguimientopeliculas.data.remote.models.MoviesUser
+import com.example.seguimientopeliculas.data.remote.models.PhotoUploadResult
 import com.example.seguimientopeliculas.data.remote.models.RegisterResponse
 import com.example.seguimientopeliculas.data.remote.models.UserResponse
 import retrofit2.Response

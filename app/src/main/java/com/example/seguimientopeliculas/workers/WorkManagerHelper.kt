@@ -51,16 +51,11 @@ class WorkManagerHelper @Inject constructor(
 
         workManager.enqueueUniquePeriodicWork(
             MOVIE_SYNC_WORK_NAME,
-            ExistingPeriodicWorkPolicy.REPLACE,
+            ExistingPeriodicWorkPolicy.UPDATE,
             syncRequest
         )
 
         Log.d(TAG, "Sincronización programada correctamente")
-    }
-
-    fun cancelAllWork() {
-        Log.d(TAG, "Cancelando todos los trabajos")
-        workManager.cancelAllWork()
     }
 
     fun cancelSyncWork() {

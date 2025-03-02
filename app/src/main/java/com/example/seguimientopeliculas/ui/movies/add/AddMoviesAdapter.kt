@@ -1,4 +1,4 @@
-package com.example.seguimientopeliculas.ui.movies.add
+/*package com.example.seguimientopeliculas.ui.movies.add
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -54,4 +54,4 @@ class MovieDiffCallback : DiffUtil.ItemCallback<Movie>() {
     override fun areContentsTheSame(oldItem: Movie, newItem: Movie): Boolean {
         return oldItem == newItem
     }
-}
+}*/

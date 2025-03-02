@@ -3,7 +3,6 @@ package com.example.seguimientopeliculas.data.repository
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
-import com.example.seguimientopeliculas.data.local.database.AppDatabase
 import com.example.seguimientopeliculas.data.local.database.LocalDatabase
 import com.example.seguimientopeliculas.data.local.iLocalDataSource.IMoviesUserFilmLocalDataSource
 import com.example.seguimientopeliculas.data.remote.models.MovieAttributes
@@ -24,7 +23,6 @@ class DefaultMovieRepository @Inject constructor(
     private val movieRemoteDataSource: MovieRemoteDataSource,
     private val moviesUserFilmLocalDataSource: IMoviesUserFilmLocalDataSource,
     private val localDatabase: LocalDatabase,
-    private val appDatabase: AppDatabase,
     private val sharedPreferences: SharedPreferences,
     @ApplicationContext private val context: Context
 ) : MovieRepository {
@@ -202,34 +200,4 @@ class DefaultMovieRepository @Inject constructor(
             return false
         }
     }
-
-    /*suspend fun debugDatabaseState(userId: Int): String {
-        return withContext(Dispatchers.IO) {
-            val result = StringBuilder()
-            try {
-                // Verificar usuarios
-                val userCount = appDatabase.userDao().getUserCount()
-                result.appendLine("Total usuarios: $userCount")
-
-                // Verificar películas
-                val allMovies = appDatabase.movieDao().getAllFilms()
-                result.appendLine("Total películas en BD: ${allMovies.size}")
-                if (allMovies.isNotEmpty()) {
-                    result.appendLine("Primera película: ${allMovies[0].title}")
-                }
-
-                // Verificar relaciones
-                val relationCount = appDatabase.moviesUserFilmDao().countRelationsForUser(userId)
-                result.appendLine("Relaciones para usuario $userId: $relationCount")
-
-                // Verificar películas del usuario
-                val userMovies = appDatabase.moviesUserFilmDao().getFilmsForUser(userId)
-                result.appendLine("Películas del usuario $userId: ${userMovies.size}")
-
-            } catch (e: Exception) {
-                result.appendLine("Error en diagnóstico: ${e.message}")
-            }
-            result.toString()
-        }
-    }*/
 }

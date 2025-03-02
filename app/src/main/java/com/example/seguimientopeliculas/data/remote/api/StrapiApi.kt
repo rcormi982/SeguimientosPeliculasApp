@@ -1,6 +1,6 @@
 package com.example.seguimientopeliculas.data.remote.api
 
-import com.example.seguimientopeliculas.data.UpdateMoviesUserPayload
+import com.example.seguimientopeliculas.data.remote.models.UpdateMoviesUserPayload
 import com.example.seguimientopeliculas.data.remote.models.MovieListRaw
 import com.example.seguimientopeliculas.data.remote.models.MoviePostRequest
 import com.example.seguimientopeliculas.data.remote.models.MovieRaw

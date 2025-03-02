@@ -65,16 +65,6 @@ class NetworkModule {
         return MovieNetworkDataSource(strapiApi, sharedPreferences)
     }
 
-    /*@Provides
-    @Singleton
-    fun provideUserNetworkDataSource(
-        strapiApi: StrapiApi,
-        sharedPreferences: SharedPreferences,
-        @ApplicationContext context: Context
-    ): UserRemoteDataSource {
-        return UserNetworkDataSource(strapiApi, sharedPreferences, context)
-    }*/
-
     @Provides
     @Singleton
     fun provideUserNetworkDataSource(

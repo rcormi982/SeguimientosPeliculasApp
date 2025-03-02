@@ -24,9 +24,6 @@ interface MovieDao {
     @Query("DELETE FROM film WHERE id = :filmId")
     fun deleteFilmById(filmId: Int)
 
-    @Query("DELETE FROM film WHERE id NOT IN (:keepIds)")
-    fun deleteMoviesExcept(keepIds: List<Int>)
-
     @Query("DELETE FROM film")
     suspend fun deleteAllMovies()
 

@@ -3,7 +3,6 @@ package com.example.seguimientopeliculas.ui.profile
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.seguimientopeliculas.data.remote.dataSource.UserRemoteDataSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +12,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val userRemoteDataSource: UserRemoteDataSource
 ) : ViewModel() {
 
     private val _photo = MutableStateFlow<Uri>(Uri.EMPTY)
@@ -29,20 +27,6 @@ class ProfileViewModel @Inject constructor(
             uri?.let {
                 _photo.value = uri
             }
-        }
-    }
-
-    suspend fun uploadPhoto(photoUri: Uri, moviesUserId: Int): Boolean {
-        return try {
-            val uploadResult = userRemoteDataSource.uploadProfilePhoto(photoUri, moviesUserId)
-            if (uploadResult != null) {
-                _photoUrl.value = uploadResult.url  // Ahora usamos .url del PhotoUploadResult
-                true
-            } else {
-                false
-            }
-        } catch (e: Exception) {
-            false
         }
     }
 

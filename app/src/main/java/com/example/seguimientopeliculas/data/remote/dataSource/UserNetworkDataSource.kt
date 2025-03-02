@@ -6,10 +6,9 @@ import android.util.Log
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.example.seguimientopeliculas.data.remote.models.Movie
-import com.example.seguimientopeliculas.data.MoviesUser
-import com.example.seguimientopeliculas.data.UpdateMoviesUserPayload
-import com.example.seguimientopeliculas.data.PhotoUploadResult
-import com.example.seguimientopeliculas.data.UpdateData
+import com.example.seguimientopeliculas.data.remote.models.MoviesUser
+import com.example.seguimientopeliculas.data.remote.models.UpdateMoviesUserPayload
+import com.example.seguimientopeliculas.data.remote.models.UpdateData
 import com.example.seguimientopeliculas.data.local.database.LocalDatabase
 import com.example.seguimientopeliculas.data.remote.models.MovieAttributes
 import com.example.seguimientopeliculas.data.remote.models.MovieListRaw
@@ -19,6 +18,7 @@ import com.example.seguimientopeliculas.data.remote.models.MoviesUserRequest
 import com.example.seguimientopeliculas.data.remote.models.RegisterPostRequest
 import com.example.seguimientopeliculas.data.remote.models.RegisterUserData
 import com.example.seguimientopeliculas.data.remote.api.StrapiApi
+import com.example.seguimientopeliculas.data.remote.models.PhotoUploadResult
 import com.example.seguimientopeliculas.data.remote.models.RegisterResponse
 import com.example.seguimientopeliculas.data.remote.models.UserResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
