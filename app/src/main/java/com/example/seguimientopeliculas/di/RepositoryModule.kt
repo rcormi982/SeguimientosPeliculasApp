@@ -1,8 +1,8 @@
 package com.example.seguimientopeliculas.di
 
 import android.content.Context
-import com.example.seguimientopeliculas.data.DefaultMovieRepository
-import com.example.seguimientopeliculas.data.MovieRepository
+import com.example.seguimientopeliculas.data.repository.DefaultMovieRepository
+import com.example.seguimientopeliculas.data.repository.MovieRepository
 import com.example.seguimientopeliculas.data.local.iLocalDataSource.IMoviesUserFilmLocalDataSource
 import com.example.seguimientopeliculas.data.local.iLocalDataSource.IUserLocalDataSource
 import com.example.seguimientopeliculas.data.local.localDataSource.MoviesUserFilmLocalDataSource

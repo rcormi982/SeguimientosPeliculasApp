@@ -7,7 +7,7 @@
     <!-- Fragmento de Bienvenida -->
     <fragment
         android:id="@+id/welcomeFragment"
-        android:name="com.example.seguimientopeliculas.ui.WelcomeFragment"
+        android:name="com.example.seguimientopeliculas.ui.welcome.WelcomeFragment"
         android:label="fragment_welcome"
         tools:layout="@layout/fragment_welcome">
         <action
@@ -21,7 +21,7 @@
     <!-- Fragmento de Inicio de Sesión -->
     <fragment
         android:id="@+id/loginFragment"
-        android:name="com.example.seguimientopeliculas.login.LoginFragment"
+        android:name="com.example.seguimientopeliculas.ui.login.LoginFragment"
         android:label="Inicio de Sesión"
         tools:layout="@layout/fragment_login">
         <action
@@ -35,7 +35,7 @@
     <!-- Fragmento de Registro -->
     <fragment
         android:id="@+id/registerFormFragment"
-        android:name="com.example.seguimientopeliculas.ui.RegisterFormFragment"
+        android:name="com.example.seguimientopeliculas.ui.register.RegisterFormFragment"
         android:label="Registro de Usuario"
         tools:layout="@layout/fragment_register_form">
         <action
@@ -46,7 +46,7 @@
     <!-- Fragmento para Mostrar Películas -->
     <fragment
         android:id="@+id/showMoviesFragment"
-        android:name="com.example.seguimientopeliculas.ui.ShowMoviesFragment"
+        android:name="com.example.seguimientopeliculas.ui.movies.show.ShowMoviesFragment"
         android:label="Mostrar Películas"
         tools:layout="@layout/fragment_show_movies">
         <action
@@ -60,7 +60,7 @@
     <!-- Fragmento para Listar Películas -->
     <fragment
         android:id="@+id/movieListFragment"
-        android:name="com.example.seguimientopeliculas.ui.MovieListFragment"
+        android:name="com.example.seguimientopeliculas.ui.movies.list.MovieListFragment"
         android:label="Lista de Películas"
         tools:layout="@layout/fragment_movie_list">
         <argument
@@ -78,7 +78,7 @@
     <!-- Fragmento para Añadir Película -->
     <fragment
         android:id="@+id/addMoviesFragment"
-        android:name="com.example.seguimientopeliculas.ui.AddMovieFragment"
+        android:name="com.example.seguimientopeliculas.ui.movies.add.AddMovieFragment"
         android:label="Añadir Película"
         tools:layout="@layout/fragment_add_movies">
         <action
@@ -92,7 +92,7 @@
     <!-- Fragmento para Editar Película -->
     <fragment
         android:id="@+id/editMovieFragment"
-        android:name="com.example.seguimientopeliculas.ui.EditMovieFragment"
+        android:name="com.example.seguimientopeliculas.ui.movies.edit.EditMovieFragment"
         android:label="Editar Película"
         tools:layout="@layout/fragment_edit_movie">
         <argument
@@ -119,7 +119,7 @@
     </fragment>
     <fragment
         android:id="@+id/movieListEditFragment"
-        android:name="com.example.seguimientopeliculas.ui.MovieListEditFragment"
+        android:name="com.example.seguimientopeliculas.ui.movies.list.MovieListEditFragment"
         android:label="Editar Lista de Películas"
         tools:layout="@layout/fragment_movie_list">
         <action
@@ -129,7 +129,7 @@
     <!-- Fragmento para Editar Perfil -->
     <fragment
         android:id="@+id/profileFragment"
-        android:name="com.example.seguimientopeliculas.ui.ProfileFragment"
+        android:name="com.example.seguimientopeliculas.ui.profile.ProfileFragment"
         android:label="Perfil"
         tools:layout="@layout/fragment_profile"/>
         <action
@@ -147,7 +147,7 @@
     <!-- Fragmento para mostrar Mapa -->
     <fragment
         android:id="@+id/mapsFragment"
-        android:name="com.example.seguimientopeliculas.ui.MapsFragment"
+        android:name="com.example.seguimientopeliculas.ui.maps.MapsFragment"
         android:label="fragment_maps"
         tools:layout="@layout/fragment_maps" />
         <action

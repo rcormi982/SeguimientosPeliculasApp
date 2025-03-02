@@ -2,13 +2,13 @@ package com.example.seguimientopeliculas.data.local.database
 
 import android.content.Context
 import android.util.Log
-import com.example.seguimientopeliculas.data.Movie
+import com.example.seguimientopeliculas.data.remote.models.Movie
 import com.example.seguimientopeliculas.data.MoviesUser
 import com.example.seguimientopeliculas.data.local.entities.MovieEntity
 import com.example.seguimientopeliculas.data.local.entities.MoviesUserEntity
 import com.example.seguimientopeliculas.data.local.entities.MoviesUserFilmEntity
 import com.example.seguimientopeliculas.data.local.entities.UserEntity
-import com.example.seguimientopeliculas.login.UserResponse
+import com.example.seguimientopeliculas.data.remote.models.UserResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject

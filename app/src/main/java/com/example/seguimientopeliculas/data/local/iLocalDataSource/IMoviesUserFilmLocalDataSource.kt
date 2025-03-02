@@ -1,6 +1,6 @@
 package com.example.seguimientopeliculas.data.local.iLocalDataSource
 
-import com.example.seguimientopeliculas.data.Movie
+import com.example.seguimientopeliculas.data.remote.models.Movie
 import kotlinx.coroutines.flow.Flow
 
 interface IMoviesUserFilmLocalDataSource {

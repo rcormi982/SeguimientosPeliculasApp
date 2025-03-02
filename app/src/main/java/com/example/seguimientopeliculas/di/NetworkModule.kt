@@ -1,13 +1,13 @@
 package com.example.seguimientopeliculas.di
 
-import MovieNetworkDataSource
+import com.example.seguimientopeliculas.data.remote.dataSource.MovieNetworkDataSource
 import android.content.Context
 import android.content.SharedPreferences
 import com.example.seguimientopeliculas.data.local.database.LocalDatabase
-import com.example.seguimientopeliculas.data.remote.MovieRemoteDataSource
-import com.example.seguimientopeliculas.data.remote.StrapiApi
-import com.example.seguimientopeliculas.data.remote.UserNetworkDataSource
-import com.example.seguimientopeliculas.data.remote.UserRemoteDataSource
+import com.example.seguimientopeliculas.data.remote.dataSource.MovieRemoteDataSource
+import com.example.seguimientopeliculas.data.remote.api.StrapiApi
+import com.example.seguimientopeliculas.data.remote.dataSource.UserNetworkDataSource
+import com.example.seguimientopeliculas.data.remote.dataSource.UserRemoteDataSource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -1,8 +1,7 @@
 package com.example.seguimientopeliculas.data.local.localDataSource
 
-import com.example.seguimientopeliculas.data.Movie
+import com.example.seguimientopeliculas.data.remote.models.Movie
 import com.example.seguimientopeliculas.data.local.database.MoviesUserFilmDao
-import com.example.seguimientopeliculas.data.local.localModelMapping.toExternal
 import com.example.seguimientopeliculas.data.local.entities.MoviesUserFilmEntity
 import com.example.seguimientopeliculas.data.local.iLocalDataSource.IMoviesUserFilmLocalDataSource
 import com.example.seguimientopeliculas.data.remote.mappers.toExternal

@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:layout_gravity="center"
-    tools:context=".ui.WelcomeFragment">
+    tools:context=".ui.welcome.WelcomeFragment">
 
     <ImageView
         android:id="@+id/clapperboardImage"

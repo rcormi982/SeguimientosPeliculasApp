@@ -11,8 +11,8 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.example.seguimientopeliculas.MoviesApplication
 import com.example.seguimientopeliculas.R
-import com.example.seguimientopeliculas.data.Movie
-import com.example.seguimientopeliculas.data.MovieRepository
+import com.example.seguimientopeliculas.data.remote.models.Movie
+import com.example.seguimientopeliculas.data.repository.MovieRepository
 import com.example.seguimientopeliculas.ui.MainActivity
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject

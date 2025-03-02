@@ -28,7 +28,7 @@ import coil3.load
 import coil3.request.crossfade
 import com.example.seguimientopeliculas.R
 import com.example.seguimientopeliculas.databinding.FragmentCameraPreviewBinding
-import com.example.seguimientopeliculas.ui.ProfileViewModel
+import com.example.seguimientopeliculas.ui.profile.ProfileViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat

@@ -1,8 +1,8 @@
 package com.example.seguimientopeliculas.data.remote.mappers
 
-import com.example.seguimientopeliculas.data.Movie
+import com.example.seguimientopeliculas.data.remote.models.Movie
 import com.example.seguimientopeliculas.data.local.entities.MovieEntity
-import com.example.seguimientopeliculas.data.remote.MovieRaw
+import com.example.seguimientopeliculas.data.remote.models.MovieRaw
 
 // Convierte de MovieRaw (remoto) a MovieEntity (local)
 fun MovieRaw.toLocal(): MovieEntity {
